@@ -62,11 +62,29 @@ inline Mesh cabinMesh() {
     for(auto& q:f){triangle(v,p[q[0]],p[q[1]],p[q[2]]);triangle(v,p[q[0]],p[q[2]],p[q[3]]);}return upload(v);
 }
 struct Material {Vec3 color;float shine=32,specular=.3f,metallic=0;};
+// Hollow circular geometry from triangles, also used as half-circle fenders.
+inline Mesh ringMesh(float arc=2*PI) {
+    std::vector<Vertex> v;constexpr int N=64;
+    for(int i=0;i<N;++i){float a=arc*i/N,b=arc*(i+1)/N;
+        Vec3 na{std::cos(a),std::sin(a),0},nb{std::cos(b),std::sin(b),0};
+        for(float z:{-.5f,.5f}){
+            Vec3 oa{na.x,na.y,z},ob{nb.x,nb.y,z},ia{na.x*.65f,na.y*.65f,z},ib{nb.x*.65f,nb.y*.65f,z};
+            if(z>0){triangle(v,oa,ob,ib);triangle(v,oa,ib,ia);}else{triangle(v,oa,ib,ob);triangle(v,oa,ia,ib);}
+        }
+        for(float r:{.65f,1.0f}){Vec3 n=na*(r<1?-1.f:1.f),m=nb*(r<1?-1.f:1.f);
+            Vec3 p{na.x*r,na.y*r,-.5f},q{nb.x*r,nb.y*r,-.5f},s{na.x*r,na.y*r,.5f},t{nb.x*r,nb.y*r,.5f};
+            v.insert(v.end(),{{p,n},{q,m},{t,m},{p,n},{t,m},{s,n}});}
+    }
+    if(arc<2*PI){for(float a:{0.f,arc}){Vec3 n{std::cos(a),std::sin(a),0};
+        triangle(v,{n.x,n.y,-.5f},{n.x,n.y,.5f},{n.x*.65f,n.y*.65f,.5f});
+        triangle(v,{n.x,n.y,-.5f},{n.x*.65f,n.y*.65f,.5f},{n.x*.65f,n.y*.65f,-.5f});}}
+    return upload(v);
+}
 struct Draw {int mesh;Mat4 model;Material material;};
 class Renderer {
 public:
     GLuint program=0,depthProgram=0,shadowFbo=0,shadowTexture=0;
-    Mesh meshes[4];
+    Mesh meshes[6];
     Mat4 lightVP;
     Renderer() {
         // Share the lighting formula between vertex (Gouraud) and fragment
@@ -139,6 +157,7 @@ layout(location=0)in vec3 position;uniform mat4 model,lightVP;
 void main(){gl_Position=lightVP*model*vec4(position,1);})GLSL",R"GLSL(#version 330 core
 void main(){})GLSL");
         meshes[0]=cubeMesh();meshes[1]=cylinderMesh();meshes[2]=sphereMesh();meshes[3]=cabinMesh();
+        meshes[4]=ringMesh();meshes[5]=ringMesh(PI);
         lightVP=ortho(-19,19,-13,13,1,65)*lookAt({-12,27,18},{0,0,0},{0,1,0});
         glGenFramebuffers(1,&shadowFbo);glGenTextures(1,&shadowTexture);glBindTexture(GL_TEXTURE_2D,shadowTexture);
         glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,2048,2048,0,GL_DEPTH_COMPONENT,GL_FLOAT,nullptr);
