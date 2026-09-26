@@ -50,14 +50,14 @@ in vec3 c;out vec4 frag;void main(){frag=vec4(c,1);})GLSL");
         Vec3 edge=primary?Vec3{.95f,.65f,.29f}:Vec3{.3f,.48f,.55f};
         rect(r.x,r.y,r.w,r.h,edge);
         rect(r.x+1,r.y+1,r.w-2,r.h-2,hover?Vec3{.17f,.29f,.33f}:Vec3{.065f,.12f,.15f});
-        text(r.x+12,r.y+11,label,1.65f,primary?edge:Vec3{.88f,.94f,.95f});
+        text(r.x+10,r.y+10,label,1.4f,primary?edge:Vec3{.88f,.94f,.95f});
     }
     void badge(const Mat4& vp,Vec3 world,int number,bool active){
         float cx=vp.m[0]*world.x+vp.m[4]*world.y+vp.m[8]*world.z+vp.m[12];
         float cy=vp.m[1]*world.x+vp.m[5]*world.y+vp.m[9]*world.z+vp.m[13];
         float cw=vp.m[3]*world.x+vp.m[7]*world.y+vp.m[11]*world.z+vp.m[15];if(cw<=0)return;
         float x=(cx/cw*.5f+.5f)*width,y=(.5f-cy/cw*.5f)*height;
-        if(x<16||x>width-16||y<105||y>height-148)return;
+        if(x<16||x>width-16||y<90||y>height-90)return;
         Vec3 c=active?Vec3{.95f,.65f,.26f}:Vec3{.44f,.58f,.63f};
         rect(x-13,y-10,27,22,{.06f,.10f,.13f});rect(x-13,y+12,27,2,c);
         std::string s=(number<10?"0":"")+std::to_string(number);text(x-9,y-6,s,1.6f,c);
