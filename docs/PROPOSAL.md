@@ -1,165 +1,155 @@
-﻿# 3D Automotive Chain Reaction — Inspired by Honda Cog
+# 3D Automotive Chain Reaction ? Inspired by Honda Cog
 
-**Student:** Mohammad Moin Uddin Moin  
-**Roll:** 2107111  
-**Course:** Computer Graphics
+**Mohammad Moin Uddin Moin | Roll 2107111 | Computer Graphics**
 
-## Project proposal
+## Objective
 
-The project demonstrates a continuous sequence of automotive and mechanical
-parts in a 3D OpenGL scene. A gear pair operates a release lever, allowing a wheel
-to roll down a track. The wheel drives a windshield wiper, which pushes a tipping
-bar. The bar starts a three-panel domino sequence, ending at a receiver beside
-a stylized car. In the final version, the receiver will release the car for its
-forward movement and ending shot.
+Demonstrate 3D transformations, moving objects, lighting and shading through a
+continuous mechanical chain reaction. The scene is built from cubes, spheres
+and triangles. Curved gears, wheels, hubs, pulleys and wheel arches use generated
+triangle geometry. No imported model or physics engine is used.
 
-The Honda Cog advertisement is an inspiration for sequential cause and effect,
-not a scene to reproduce exactly. No Honda branding, downloaded car model,
-imported mesh or rigid-body physics engine is used.
+## Current implementation
 
-The purpose is to demonstrate transformations, viewing, animation, lighting,
-shading and normals using geometry that one student can construct and explain.
+The previous project already supplied working window/input handling, primitive
+meshes, a timeline, camera controls and lighting. These were retained and extended.
+Three repetitive domino panels were replaced by mechanically different assemblies,
+and the previously stationary car now has a complete release and departure.
 
-## Current milestone (approximately 70% of the planned project)
+The updated machine has a consistent workbench, dark mounts, restrained steel and
+brass mechanisms, and one blue car. Normal presentation shows a small title and
+stage indicator. Press H for explanatory labels and C for detailed controls.
 
-The executable already renders all ten main objects and animates the chain
-through the third domino and receiver. The car is modeled and parked. The
-remaining central feature is the car's release and forward movement, followed
-by final contact tuning, presentation polish and the final report.
+## Cause-and-effect sequence
 
-This percentage is a planning estimate. Demonstrate the implemented behavior
-and identify the remaining work explicitly; do not claim the ending is complete.
+1. Two gears rotate in opposite directions. A pin on the large gear pushes a lever.
+2. The lever retracts a stop through a slot in the wheel track.
+3. The wheel rolls down the track, then pushes the wiper's input paddle.
+4. The wiper sweeps into a tab on a tipping bar.
+5. The bar strikes an off-centre crank paddle, starting a flywheel stroke.
+6. The crank and fixed-length connecting rod advance a guided piston.
+7. The piston head pushes a catch tab. The supporting finger rotates clear.
+8. A counterweight drops in its guide. Its cable turns a pulley and raises the car barrier.
+9. Once the barrier clears the roof, the car moves forward along its exit bay.
+10. The completed scene holds for inspection. Space replays after completion; R resets.
 
-## Layout
+The three new assemblies are the crank/piston, hinged catch, and pulley/counterweight.
+They have different motion and each is necessary to trigger the next stage.
 
-The scene uses a right-handed coordinate system: X is the direction of the chain,
-Y is vertical and Z provides depth. Axles generally lie along Z. Parts are placed
-on an exhibit platform and seen through a perspective orbit camera.
+## Timeline
 
-```text
-X increases to the right; Y points up; axles run along Z
-
-  small gear -> large gear -> release lever
-                                   |
-                                   v
-                              rolling wheel
-                                    \____ -> wiper -> bar -> panel 1 -> 2 -> 3
-                                                                             |
-                                                                         receiver
-                                                                             |
-                                                                     parked car
-                                                               [final stage pending]
-```
-
-## Mechanism and graphics mapping
-
-| Object | Geometry | Graphics concept | Current behavior |
-|---|---|---|---|
-| Small gear | Triangle disk + cube teeth | Local rotation | Drives large gear |
-| Large gear | Triangle disk + cube teeth + cam pin | Opposite rotation, radius ratio | Pushes lever |
-| Lever assembly | Scaled cubes + axle | Pivot rotation, linked translation | Retracts wheel gate |
-| Wheel | Triangle circular solids + cube spokes/treads | Translation with distance-based rotation | Rolls and pushes paddle |
-| Wiper assembly | Cube arm/blade + circular hub | Local pivot, composite transforms | Sweeps into bar tab |
-| Bar | Scaled cube + triangle axle | Bottom-pivot rotation | Starts panel sequence |
-| Panel 1 | Scaled cube | Bottom-edge pivot | Tips into panel 2 |
-| Panel 2 | Scaled cube | Delayed overlapping rotation | Tips into panel 3 |
-| Panel 3 | Scaled cube | Delayed rotation | Depresses receiver |
-| Car | Cubes, triangular cabin and wheels, sphere mirrors | Parent/child modeling | Modeled; movement pending |
-
-## Animation design
-
-The application advances one simulation clock by elapsed frame time. When paused,
-the clock stays unchanged. Each mechanism derives its pose from that clock, so
-resetting or seeking gives a consistent scene without accumulated numerical drift.
-
-Each stage uses a clamped progress value and smooth interpolation:
-
-```text
-u = clamp((simulationTime - startTime) / duration, 0, 1)
-smooth(u) = u*u*(3 - 2*u)
-```
-
-| Time (seconds) | Action begins |
+| Time | Trigger |
 |---:|---|
-| 0.00 | Gear pair rotates |
-| 3.05 | Lever pivots and gate retracts |
-| 4.50 | Wheel rolls |
-| 8.05 | Wheel reaches paddle; wiper sweeps |
-| 10.15 | Bar tips |
-| 11.28 | First panel tips |
-| 12.05 | Second panel tips |
-| 12.82 | Third panel tips |
-| 14.30 | Receiver depresses |
-| 17.50 | Final hold ends; playback loops |
+| 0.00 | Gear pair starts |
+| 3.05 | Lever begins releasing wheel gate |
+| 4.50 | Wheel begins rolling |
+| 8.05 | Wheel reaches paddle; wiper begins sweeping |
+| 10.15 | Wiper pushes bar |
+| 11.20 | Bar starts crank stroke |
+| 13.20 | Piston head starts pushing catch |
+| 14.55 | Catch is clear; counterweight descends and barrier rises |
+| 16.65 | Barrier finishes rising |
+| 17.30 | Car starts moving |
+| 22.00 | Car finishes its four-unit movement |
+| 25.00 | Final hold completes; replay available |
 
-Adjacent stages can overlap. These times are authored contact cues, not results
-of collision detection. A falling panel or gear does not abruptly stop when the
-status display changes to the next stage.
+Every pose is calculated from elapsed simulation time. A clamped progress value
+and smoothstep easing give continuous motion. Intervals overlap so one component
+can finish while its successor starts. These are scripted contact cues rather
+than collision-detection results.
 
-## Viva explanations
+## Transformations to explain
 
-**Transformation order.** Matrices use column vectors. `T * R * S * vertex`
-scales the mesh in local space, rotates it, then places it in the scene.
-Reversing translation and rotation can make an object orbit the world origin
-instead of spinning at its own location.
+Matrices use column vectors. `T * R * S * vertex` scales in local space, rotates,
+and finally positions the result in the world. Reversing translation and rotation
+can make a part orbit the origin instead of spinning around its own axle.
 
-**Local pivots.** Levers, bars and panels are built relative to a local hinge.
-Their model matrix begins with `T(hinge) * R(angle)`. For a pivot that is not the
-local origin, use `T(pivot) * R(angle) * T(-pivot)`.
+| Part | Explanation |
+|---|---|
+| Gears | Local Z rotation; small gear angle = -1.5 times large gear angle |
+| Lever, wiper, bar, catch | Build relative to hinge, then use T(hinge) * R(angle) |
+| Wheel | Translate its center, then rotate by negative travel/radius |
+| Crank | Rotate about its fixed center through a 150-degree stroke |
+| Connecting rod | Position between two moving joints; rotate/scale a cube along their connecting vector |
+| Piston | Translate on a fixed horizontal axis, calculated from rod length |
+| Counterweight/barrier | Equal and opposite vertical translation |
+| Pulley | Rotate by cable travel divided by pulley radius |
+| Car | Parent rotation aligns local X with world +Z; parent translation moves all children |
+| Car wheels | Child Z rotations from car travel divided by wheel radius |
 
-**Hierarchy.** Car wheels, body, cabin and mirrors inherit a shared car-root
-matrix. Changing that parent transform will move the entire car in the final
-stage. Each wheel can then have its own child rotation.
+For a pivot not at the mesh origin, use `T(pivot) * R(angle) * T(-pivot)`.
+Scaled cubes create bars, rails, supports and panels; inverse-transpose normal
+transformation keeps their lighting correct under non-uniform scaling.
 
-**Wheel rolling.** The wheel's angle in radians is traveled distance divided
-by radius. Its sign depends on the travel direction and axle orientation.
+## Three useful equations
 
-**Gear ratio.** The pitch radii are 0.70 and 1.05 units. Therefore the small
-gear turns 1.5 times as far, in the opposite direction. Teeth are simplified
-rectangular blocks rather than engineering-accurate involute profiles.
+**Crank-slider:** let r be crank radius, L rod length, and theta crank angle.
+The crank pin is `(cx + r*cos(theta), cy + r*sin(theta))`. The slider stays at
+height cy, so its X coordinate is:
 
-**Curved geometry.** Circle points use cosine and sine. A disk consists of
-triangles from its center to adjacent rim points. Front/back rings are joined
-with two triangles per side segment to form a thick wheel or axle.
+```text
+sliderX = cx + r*cos(theta) + sqrt(L*L - (r*sin(theta))^2)
+```
 
-**Normals.** Cube faces have constant normals. Curved sides use interpolated
-radial normals. The shader transforms normals with
-`transpose(inverse(mat3(model)))` and normalizes them; simply applying the model
-matrix would give incorrect lighting under non-uniform scaling.
+This comes from a right triangle and keeps the connecting rod rigid.
 
-**Lighting and shading.** The scene combines ambient, diffuse and specular terms.
-The default is per-fragment Blinn-Phong, a Phong-style model using a halfway
-vector. Flat mode uses a triangle face normal. Gouraud mode evaluates lighting
-at vertices and interpolates the resulting color. Press L to compare them on
-curved wheels and gears. Material shininess and specular strength distinguish
-metal, rubber, supports and the car body.
+**Cable:** the counterweight drops by d while the barrier rises by d. One vertical
+cable segment lengthens by d and the other shortens by d. Fixed guide arcs do not
+change length. Pulley angle equals d/radius.
 
-**Shadows (an extra feature).** A depth map renders the scene from the light's
-view. The main pass compares each surface with that depth map to determine
-whether the surface is shaded. This is separate from the lighting model.
+**Rolling:** wheel angle in radians equals traveled distance divided by radius.
+Both the loose wheel and all four car wheels use this relationship.
 
-## Two-minute demonstration
+## Triangle geometry
 
-1. Open `cog_demo.exe`. Explain the ten numbered main objects and the primitive rule.
-2. Playback starts automatically. Let the full chain run in the overview (about 18 seconds).
-3. Press R, then 3, then Space. Show the gears, cam, lever and rolling wheel.
-4. Press Space to pause. Drag to orbit and use the wheel to zoom.
-5. Click Light to compare Studio, Daylight, Sunset and Night. Adjust brightness or shadows, then click Shading to compare the shading models.
-6. Press 4 and seek using the bottom timeline to show the wiper and dominoes.
-7. Press 1 and R to restore the overview. State that car release/movement,
-   final contact tuning and the final report are the remaining work.
+Sample circle points with cosine and sine. A solid disk uses a triangle fan for
+each cap and two triangles per side segment. A hollow ring uses inner and outer
+rings joined by triangles, including the inner wall. A half-ring gives a simple
+car wheel arch. Gear teeth and spokes are scaled cubes placed around the ring.
 
-## Suggested verbal introduction
+This keeps the shapes explainable while providing real thickness and openings.
+The cabin is a small triangulated prism; the car also has windows, pillars,
+mirrors, grille, lights, hubs and wheel arches.
 
-"My project is a simplified 3D automotive chain reaction inspired by Honda Cog.
-I constructed the objects using basic shapes and triangle-based circular meshes.
-The current version animates the gears, lever, wheel, wiper, tipping bar and
-three domino panels. It also demonstrates perspective viewing, hierarchical
-transformations, lighting and three shading modes. I use a controlled timeline
-instead of a physics engine. The car model is complete, and its release and
-movement are the main remaining animation task."
+## Lighting and shading
 
-## Lighting controls added
+The default mode is correctly labeled **Blinn-Phong**: it computes specular light
+using the halfway vector between the light and viewer directions. Lighting is
+evaluated per fragment. Flat mode uses each triangle's face normal; Gouraud mode
+evaluates lighting at vertices and interpolates the result.
 
-The Light button selects four rigs. Each rig changes the direction and color of the main directional light, the color of a point fill light, the rear rim light, ambient sky/ground colors and exposure. Point light attenuation reduces its contribution with distance. Only the main light casts a shadow map. A 5 by 5 filter softens its edges, with slope correction to prevent the floor from shadowing itself. Tone mapping compresses bright highlights before gamma correction. Metal uses a tinted specular highlight; this remains a Phong-style teaching model, not a full physically based renderer. The on-screen brightness buttons control exposure, independently of animation speed.
+Ambient sky/ground light prevents unlit surfaces from becoming entirely black.
+Lambert diffuse light depends on the surface normal and light direction. Specular
+highlights depend on the viewer and light directions, material strength and shininess.
+A directional main light, a point fill with distance attenuation, and a rear light
+make metal and rubber distinguishable. The four presets change direction/color,
+ambient illumination and exposure without changing the animation.
 
+The Shadows control switches a real shadow-map pass: render depth from the main
+light's view, then compare surface depth against that texture. A 5x5 filter softens
+edges; slope correction reduces self-shadow artifacts. Only the main light casts
+shadows. Exposure/tone mapping/gamma are used for display; the shader is not a full
+physically based renderer. Windows are opaque and lamps are modeled shapes.
+
+## Two-minute viva demonstration
+
+1. Run cog_demo.exe. Explain the full sequence as it plays (25 seconds).
+2. Press 2 for the closer presentation view and H for numbered mechanisms.
+3. Seek around 11?14 seconds using the bottom line; step with arrow keys.
+   Explain the crank-slider equation and the rigid connecting rod.
+4. Press 4 and seek around 15?18 seconds. Show the catch, falling weight,
+   rising barrier and clearance before the car starts.
+5. Click Light to compare presets. Open Tools, toggle Shadows and cycle Shading.
+   Explain diffuse/specular terms and the inverse-transpose normal matrix.
+6. Press 1 to show the final car position. Press R to prove all mechanisms reset.
+   Press Space to play again.
+
+## Scope and limitations
+
+This is a controlled graphics animation. It does not simulate rigid-body forces,
+gear tooth contact or cable tension. Gear teeth are simplified blocks. The crank
+uses an authored impulse/stroke after the bar's strike, and car acceleration is
+scripted. Rod length, cable travel, roof clearance and wheel rotation are checked
+mathematically. This scope is intentional so the graphics concepts remain clear.
+
+The older working source is archived in backups/before-unique-mechanisms.zip.
