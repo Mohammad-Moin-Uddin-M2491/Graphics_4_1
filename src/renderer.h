@@ -22,9 +22,9 @@ inline GLuint makeProgram(const char* vs,const char* fs) {
 inline void matrix(GLuint p,const char* name,const Mat4& m) {glUniformMatrix4fv(glGetUniformLocation(p,name),1,GL_FALSE,m.m);}
 inline void vector(GLuint p,const char* name,Vec3 v) {glUniform3f(glGetUniformLocation(p,name),v.x,v.y,v.z);}
 struct Vertex {Vec3 position,normal;};
-struct Mesh {GLuint vao=0,vbo=0;GLsizei count=0;};
+struct Mesh {GLuint vao=0,vbo=0;GLsizei count=0;std::vector<Vertex> vertices;};
 inline Mesh upload(const std::vector<Vertex>& v) {
-    Mesh m;m.count=static_cast<GLsizei>(v.size());glGenVertexArrays(1,&m.vao);glGenBuffers(1,&m.vbo);
+    Mesh m;m.vertices=v;m.count=static_cast<GLsizei>(v.size());glGenVertexArrays(1,&m.vao);glGenBuffers(1,&m.vbo);
     glBindVertexArray(m.vao);glBindBuffer(GL_ARRAY_BUFFER,m.vbo);glBufferData(GL_ARRAY_BUFFER,v.size()*sizeof(Vertex),v.data(),GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),nullptr);
     glEnableVertexAttribArray(1);glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(Vertex),reinterpret_cast<void*>(sizeof(Vec3)));return m;
@@ -96,11 +96,10 @@ vec3 ambient(vec3 n) {
     return baseColor*mix(groundColor,skyColor,n.y*.5+.5)*(1.0-.55*metallic);
 }
 vec3 lightTerm(vec3 n,vec3 v,vec3 l,vec3 energy) {
-    float ndl=max(dot(n,l),0.0);vec3 h=normalize(l+v);
+    float ndl=max(dot(n,l),0.0);vec3 reflected=reflect(-l,n);
     vec3 tint=mix(vec3(1),baseColor,metallic);
-    float fresnel=.18+.82*pow(1.0-max(dot(v,h),0.0),5.0);
     vec3 diffuse=baseColor*(1.0-.65*metallic)*ndl;
-    vec3 highlight=tint*pow(max(dot(n,h),0.0),shine)*specular*(1.0+shine*.045)*(1.0+fresnel);
+    vec3 highlight=tint*pow(max(dot(v,reflected),0.0),shine)*specular*(1.0+shine*.045);
     return (diffuse+highlight*ndl)*energy;
 }
 void evaluateLights(vec3 n,vec3 p,out vec3 key,out vec3 other) {
@@ -143,8 +142,9 @@ float shadow(vec3 n,vec3 l){vec3 p=shadowPos.xyz/shadowPos.w*.5+.5;
     return s/25.0;}
 void main(){vec3 n=normalize(N);
     if(shading==1){n=normalize(cross(dFdx(worldPos),dFdy(worldPos)));if(dot(n,N)<0.0)n=-n;}
-    vec3 key,other;evaluateLights(n,worldPos,key,other);
+    vec3 key,other;
     if(shading==2){key=vertexKey;other=vertexOther;}
+    else evaluateLights(n,worldPos,key,other);
     vec3 c=other+key*(1.0-shadow(n,normalize(keyDirection)));
     float haze=1.0-exp(-.025*max(length(eye-worldPos)-24.0,0.0));
     c=mix(c,background,haze);c=max(c*exposure,vec3(0));

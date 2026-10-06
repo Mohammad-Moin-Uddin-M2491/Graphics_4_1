@@ -58,7 +58,7 @@ struct Scene {
     }
     void car(const Pose& p) {
         // All wheels, windows and body pieces inherit the chassis transform.
-        Mat4 root=translate({9.0f,.03f,.4f})*rotateY(-PI/2)*translate({p.carTravel,0,0});
+        Mat4 root=translate(p.carPosition)*rotateY(p.carYaw);
         box({0,.72f,0},{3.35f,.36f,1.45f},teal,root);
         box({0,.37f,0},{2.85f,.17f,1.35f},dark,root);
         shape(3,root*translate({-.28f,1.1f,0})*scale({1.08f,.78f,1.27f}),glass);
@@ -77,22 +77,64 @@ struct Scene {
         box({1.72f,.7f,0},{.05f,.13f,.52f},dark,root);
         for(float z:{-.49f,.49f}){box({1.73f,.77f,z},{.05f,.16f,.27f},{{.85f,.8f,.58f},96,.8f},root);box({-1.73f,.76f,z},{.05f,.12f,.27f},{{.42f,.015f,.01f},64,.6f},root);}
         for(int i=0;i<5;++i)box({1.75f,.66f,(i-2)*.08f},{.025f,.09f,.025f},steel,root);
-        for(float x:{-1.05f,1.05f})for(float z:{-.77f,.77f})wheel(root*translate({x,.43f,z})*rotateZ(p.carSpin),CAR_WHEEL_RADIUS,.22f);
+        for(float x:{-1.05f,1.05f})for(float z:{-.77f,.77f})
+            wheel(root*translate({x,.43f,z})*rotateY(x>0?p.steer:0)*rotateZ(p.carSpin),CAR_WHEEL_RADIUS,.22f);
     }
     void build(const Pose& p,float /*time*/) {
         items.clear();
         box({0,-.53f,0},{200,.25f,200},{{.018f,.025f,.032f},20,.025f});
         box({-.5f,-.22f,0},{23.5f,.42f,4.2f},dark);
         box({-.5f,-.005f,0},{23.3f,.025f,4.0f},{{.045f,.058f,.065f},25,.1f});
-        box({9,-.22f,4.4f},{3.3f,.42f,4.8f},dark);
-        box({9,.01f,4.4f},{3.1f,.05f,4.8f},{{.045f,.058f,.065f},25,.1f});
+        // Fixed approach, hinged bridge across a real gap, and a driving apron.
+        box({9,-.22f,2.55f},{3.3f,.42f,.9f},dark);
+        box({9,.005f,2.55f},{3.1f,.05f,.9f},dark);
+        box({9,-.22f,11.1f},{14,.42f,11.8f},dark);
+        box({9,.005f,11.1f},{13.9f,.05f,11.7f},{{.07f,.08f,.085f},24,.15f});
+        for(float z=6;z<17;z+=1.5f)box({9,.035f,z},{.07f,.012f,.65f},cream);
+        for(float x:{2.15f,15.85f})box({x,.035f,11.1f},{.08f,.014f,11.4f},brass);
+        Mat4 bridge=translate({9,.03f,3})*rotateX(-p.bridge);
+        box({0,-.065f,1.1f},{3.1f,.13f,2.2f},steel,bridge);
+        for(float x:{-1.43f,1.43f})box({x,.04f,1.1f},{.09f,.1f,2.2f},brass,bridge);
+        for(float z=.2f;z<2.2f;z+=.3f)box({0,.007f,z},{2.7f,.015f,.025f},dark,bridge);
+        shape(1,translate({9,.03f,3})*rotateY(PI/2)*scale({.13f,.13f,3.4f}),brass);
+        // Weight depresses a foot pedal; its rod releases the bridge damper.
+        float pedalY=std::min(.42f,1.65f-p.weightDrop);
+        box({7.21f,pedalY,.1f},{.85f,.1f,.7f},brass);
+        beam({7.21f,pedalY,.6f},{7.4f,.22f,2.85f},.07f,steel);
+        beam({7.4f,.22f,2.85f},transform(bridge,{-1.43f,0,1.65f}),.09f,steel);
         for(float x:{-11.f,-6.f,-1.f,4.f,10.f})for(float z:{-1.7f,1.7f})mount({x,.025f,z},{.35f,.04f,.3f});
-        for(float x:{7.95f,10.05f})box({x,.05f,4.45f},{.055f,.06f,4.7f},steel);
+        for(float x:{7.5f,10.5f})box({x,.06f,2.55f},{.055f,.06f,.9f},steel);
         axleStand(-10,3.25f);axleStand(-8.25f,3.25f);
         gear(-10,.70f,12,p.gearSmall,brass);
         gear(-8.25f,1.05f,18,p.gearLarge+PI/18,steel);
-        Mat4 cam=translate({-8.25f,3.25f,0})*rotateZ(p.gearLarge+radians(-100));
+        // The output cam is stationary while the input winds the spring.
+        Mat4 cam=translate({-8.25f,3.25f,.32f})*rotateZ(p.cam+radians(-100));
+        disk({0,0,.08f},.33f,.14f,dark,cam);
         disk({.85f,0,.5f},.12f,.4f,brass,cam);
+        beam(transform(cam,{0,0,.5f}),transform(cam,{.85f,0,.5f}),.08f,steel);
+        // Exposed torsion spring tightens as the gear train winds it.
+        for(int i=0;i<100;++i){
+            auto spring=[&](float u){float a=u*8*PI+p.gearLarge*.12f;
+                float r=.2f+u*(.5f-.17f*std::min(p.gearLarge/(8*PI),1.f));
+                return Vec3{-8.25f+r*std::cos(a),3.25f+r*std::sin(a),.53f};};
+            beam(spring(i/100.f),spring((i+1)/100.f),.028f,brass);
+        }
+        // Glove: cube palm/fingers and sphere knuckles, on a simple articulated arm.
+        mount({-11.5f,.1f,1.1f},{.6f,.2f,.8f});
+        Vec3 shoulder{-11.5f,1.7f,1.1f},elbow{-11.55f,p.hand.y+.5f,1.1f};
+        beam({-11.5f,.2f,1.1f},shoulder,.15f,dark);beam(shoulder,elbow,.12f,steel);beam(elbow,p.hand,.12f,steel);
+        ball(shoulder,.16f,brass);ball(elbow,.15f,brass);
+        box(p.hand,{.5f,.3f,.3f},cream);
+        for(int i=0;i<3;++i){float z=p.hand.z+(i-1)*.12f;
+            ball({p.hand.x+.23f,p.hand.y-.05f,z},.075f,cream);
+            Mat4 finger=translate({p.hand.x+.23f,p.hand.y-.05f,z})*rotateZ(-.4f-.6f*p.grip);
+            box({0,-.23f,0},{.11f,.46f,.095f},cream,finger);
+        }
+        box(p.hand+Vec3{-.2f+.08f*p.grip,-.23f,0},{.13f,.4f,.16f},cream);
+        box({-10.8f,.15f,1.2f},{.8f,.2f,.65f},dark);
+        ring({-10,2.68f,.8f},.18f,.15f,teal);
+        beam({-10,2.68f,.7f},{-10,3.25f,.45f},.08f,steel);
+        disk(p.pin,.10f,.38f,brass);ball(p.pin+Vec3{0,0,.21f},.14f,brass);
         // Lever local origin is its axle. Its right end retracts the gate.
         axleStand(-6.7f,3.55f,-.32f);
         Mat4 lever=translate({-6.7f,3.55f,.55f})*rotateZ(p.lever);
@@ -124,16 +166,24 @@ struct Scene {
         box({0,1.83f,.04f},{.13f,.65f,.17f},rubber,wiper);
         disk({0,0,.1f},.19f,.25f,brass,wiper);
         // Wheel pushes the paddle; a visible rod turns the wiper crank.
-        float sweep=-p.wiper/radians(65);
-        Vec3 paddle{-1.05f+.3f*sweep,.72f,.12f};
+        Vec3 paddle{-1.05f+.3f*p.paddle,.72f,.12f};
         box(paddle,{.1f,.75f,.65f},brass);
-        beam({paddle.x,.47f,.42f},transform(wiper,{-.28f,0,.35f}),.065f,steel);
+        // The trigger trips a spring-driven indexing unit, not a rigid rod that
+        // would pull the rolling wheel backwards on each return stroke.
+        beam({paddle.x,.47f,.42f},{-.45f,.32f,.55f},.065f,steel);
+        Mat4 indexer=translate({-.45f,.32f,.55f})*rotateZ(-p.wiperIndex*2*PI/3);
+        ring({0,0,0},.3f,.08f,brass,indexer);
+        for(int i=0;i<3;++i)ball(transform(indexer,{.23f*std::cos(i*2*PI/3),.23f*std::sin(i*2*PI/3),.08f}),.05f,cream);
+        box({-.17f,.42f,.55f},{.12f,.08f,.15f},steel);
         box({-1.13f,.15f,0},{.17f,.22f,1.03f},rubber);
-        // Tipping bar strikes the crank's left paddle at the start of its turn.
+        // Tipping bar depresses a clutch pedal below the crank.
         Mat4 bar=translate({1.6f,.075f,.1f})*rotateZ(p.bar);
         box({0,.98f,0},{.19f,1.96f,.32f},red,bar);
         box({-.16f,1.23f,0},{.48f,.16f,.4f},brass,bar);
         disk({1.6f,.1f,.1f},.15f,.68f,steel);
+        float clutch=-p.bar/radians(84);
+        box({3.5f,.35f-.12f*clutch,.1f},{.4f,.1f,.45f},brass);
+        beam({3.5f,.35f-.12f*clutch,.38f},{3.55f,1.55f,.38f},.065f,steel);
         // Crank and slider: rotary input, fixed-length rod, linear piston.
         axleStand(CRANK_CENTER.x,CRANK_CENTER.y);
         Mat4 crank=translate(CRANK_CENTER)*rotateZ(p.crank);
@@ -147,10 +197,23 @@ struct Scene {
         for(float z:{-.32f,.52f})beam({4.55f,1.55f,z},{6.65f,1.55f,z},.09f,steel);
         for(float x:{4.7f,6.45f}){mount({x,.09f,.1f},{.55f,.18f,1.15f});box({x,.75f,-.3f},{.12f,1.5f,.15f},dark);}
         box(slider,{.42f,.48f,.63f},steel);
-        shape(1,translate(slider+Vec3{.37f,0,0})*rotateY(PI/2)*scale({.13f,.13f,.52f}),brass);
-        box(slider+Vec3{.52f,.2f,0},{.15f,.42f,.22f},steel);
-        // Crosshead nose pushes the catch's low input tab. Its upper finger
-        // rotates down and removes the counterweight's supporting ledge.
+        shape(1,translate(slider+Vec3{.18f,0,0})*rotateY(PI/2)*scale({.13f,.13f,.25f}),brass);
+        // Each compression stroke lifts a pawl and pushes the toothed rack.
+        // The catch stays pinned until the rack completes all four advances.
+        box({5.65f+.65f*p.rack,2.25f,.78f},{1.3f,.14f,.22f},brass);
+        for(int i=0;i<9;++i)box({5.05f+.15f*i+.65f*p.rack,2.36f,.78f},{.065f,.09f,.22f},steel);
+        for(float x:{5.05f,6.45f}){
+            box({x,1.14f,1},{.1f,2.28f,.12f},dark);ring({x,2.25f,.78f},.2f,.3f,steel);
+        }
+        Vec3 pawl=slider+Vec3{0,.25f,.65f};
+        beam(pawl,{std::min(6.8f,pawl.x+.16f),2.38f,.78f},.065f,steel);
+        disk(pawl,.1f,.14f,brass);
+        // Four brass indicator pegs expose the mechanically accumulated state.
+        for(int i=0;i<4;++i)ball({5.12f+i*.33f,2.65f,.78f},.075f,p.rack>=(i+1)*.25f?brass:dark);
+        beam({6.95f,2.25f,.78f},{6.93f,1.78f,.55f+p.bolt},.07f,steel);
+        disk({6.93f,1.75f,.2f+p.bolt},.07f,.75f,brass);
+        box({6.93f,1.75f,.8f},{.28f,.28f,.16f},dark);
+        // The pin withdraws along Z, allowing the catch to rotate down.
         Mat4 latch=translate({6.7f,1.68f,.1f})*rotateZ(p.catchAngle);
         box({.4f,0,0},{.9f,.1f,.5f},brass,latch);
         box({-.05f,.19f,0},{.1f,.32f,.45f},steel,latch);
@@ -192,6 +255,15 @@ struct Scene {
         for(float x:{7.95f,10.05f}){mount({x,.08f,2.2f},{.34f,.16f,.5f});box({x,1.02f,2.2f},{.1f,2.04f,.13f},steel);}
         box({9,.36f+p.gateLift,2.2f},{2.1f,.16f,.13f},brass);
         for(float x:{7.95f,10.05f})box({x,.36f+p.gateLift,2.2f},{.19f,.3f,.23f},dark);
+        // Bridge end-stop enables the starter shaft; its coupling retracts
+        // completely before the car is released at 70 active seconds.
+        mount({10.85f,.12f,1.25f},{.7f,.24f,.8f});
+        shape(1,translate({10.8f,.83f,1.25f})*rotateY(PI/2)*scale({.32f,.32f,.65f}),dark);
+        Mat4 starter=translate({10.13f+p.coupling,.83f,1.25f})*rotateY(PI/2)*rotateZ(p.starter);
+        disk({0,0,0},.09f,.9f,steel,starter);ring({0,0,.27f},.27f,.12f,brass,starter);
+        for(int i=0;i<4;++i)box({.12f,0,.27f},{.24f,.045f,.13f},steel,starter*rotateZ(i*PI/2));
+        Vec3 bridgeTrip=transform(bridge,{1.43f,0,1.9f});
+        beam(bridgeTrip,{10.85f,.25f,3},.04f,brass);beam({10.85f,.25f,3},{10.85f,.7f,1.25f},.04f,brass);
         // The car travels toward the viewer along +Z, on the same bench level.
         car(p);
     }
