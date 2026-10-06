@@ -2,7 +2,7 @@
 # Running `make` builds every source file and starts the program.
 
 CXX      := g++
-CXXFLAGS := -std=c++17 -Wall -Wextra -Iinclude
+CXXFLAGS := -std=c++17 -O2 -Wall -Wextra -Iinclude
 LDFLAGS  := -Llib
 LDLIBS   := -lglfw3 -lopengl32 -lgdi32
 

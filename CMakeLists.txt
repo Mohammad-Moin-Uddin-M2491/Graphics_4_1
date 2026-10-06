@@ -8,6 +8,9 @@ include_directories(include)
 link_directories(lib)
 
 add_executable(cog_demo src/main.cpp src/glad.c)
+if(MINGW)
+    target_compile_options(cog_demo PRIVATE -O2 -Wall -Wextra)
+endif()
 
 target_link_libraries(cog_demo PRIVATE
     glfw3
