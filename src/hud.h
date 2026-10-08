@@ -30,20 +30,24 @@ struct UiRect {
     float x,y,w,h;
     bool contains(float px,float py) const {return px>=x&&px<x+w&&py>=y&&py<y+h;}
 };
+struct UiLayout {
+    float factor,canvasWidth,height,left;
+    UiLayout(int w,int h){factor=std::min(w/1280.f,h/720.f);canvasWidth=w/factor;height=h/factor;left=(canvasWidth-1280)*.5f;}
+};
 class Hud {
     GLuint program=0,vao=0,vbo=0;
     std::vector<HudVertex> vertices;
 public:
-    float width=1280,height=720;
+    float width=1280,height=720,canvasWidth=1280,left=0;
     Hud(){program=makeProgram(R"GLSL(#version 330 core
-layout(location=0)in vec2 p;layout(location=1)in vec3 color;uniform vec2 viewport;
-out vec3 c;void main(){c=color;gl_Position=vec4(p.x/viewport.x*2.0-1.0,1.0-p.y/viewport.y*2.0,0,1);})GLSL",
+layout(location=0)in vec2 p;layout(location=1)in vec3 color;uniform vec2 viewport;uniform float left;
+out vec3 c;void main(){c=color;gl_Position=vec4((p.x+left)/viewport.x*2.0-1.0,1.0-p.y/viewport.y*2.0,0,1);})GLSL",
         R"GLSL(#version 330 core
 in vec3 c;out vec4 frag;void main(){frag=vec4(c,1);})GLSL");
         glGenVertexArrays(1,&vao);glGenBuffers(1,&vbo);glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);
         glEnableVertexAttribArray(0);glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(HudVertex),nullptr);
         glEnableVertexAttribArray(1);glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,sizeof(HudVertex),reinterpret_cast<void*>(sizeof(float)*2));}
-    void begin(int w,int h){width=1280;height=1280.0f*h/w;vertices.clear();}
+    void begin(int w,int h){UiLayout l(w,h);width=1280;height=l.height;canvasWidth=l.canvasWidth;left=l.left;vertices.clear();}
     void rect(float x,float y,float w,float h,Vec3 c){vertices.insert(vertices.end(),{{x,y,c},{x+w,y,c},{x+w,y+h,c},{x,y,c},{x+w,y+h,c},{x,y+h,c}});}
     void text(float x,float y,const std::string& value,float size,Vec3 c){for(char ch:value){auto g=glyph(ch);for(int col=0;col<5;++col)for(int row=0;row<7;++row)if(g[col]&(1<<row))rect(x+col*size,y+row*size,size,size,c);x+=6*size;}}
     void button(UiRect r,const std::string& label,bool hover,bool primary=false){
@@ -56,13 +60,13 @@ in vec3 c;out vec4 frag;void main(){frag=vec4(c,1);})GLSL");
         float cx=vp.m[0]*world.x+vp.m[4]*world.y+vp.m[8]*world.z+vp.m[12];
         float cy=vp.m[1]*world.x+vp.m[5]*world.y+vp.m[9]*world.z+vp.m[13];
         float cw=vp.m[3]*world.x+vp.m[7]*world.y+vp.m[11]*world.z+vp.m[15];if(cw<=0)return;
-        float x=(cx/cw*.5f+.5f)*width,y=(.5f-cy/cw*.5f)*height;
+        float x=(cx/cw*.5f+.5f)*canvasWidth-left,y=(.5f-cy/cw*.5f)*height;
         if(x<16||x>width-16||y<90||y>height-90)return;
         Vec3 c=active?Vec3{.95f,.65f,.26f}:Vec3{.44f,.58f,.63f};
         rect(x-13,y-10,27,22,{.06f,.10f,.13f});rect(x-13,y+12,27,2,c);
         std::string s=(number<10?"0":"")+std::to_string(number);text(x-9,y-6,s,1.6f,c);
     }
-    void flush(){glDisable(GL_DEPTH_TEST);glUseProgram(program);glUniform2f(glGetUniformLocation(program,"viewport"),width,height);
+    void flush(){glDisable(GL_DEPTH_TEST);glUseProgram(program);glUniform2f(glGetUniformLocation(program,"viewport"),canvasWidth,height);glUniform1f(glGetUniformLocation(program,"left"),left);
         glBindVertexArray(vao);glBindBuffer(GL_ARRAY_BUFFER,vbo);glBufferData(GL_ARRAY_BUFFER,vertices.size()*sizeof(HudVertex),vertices.data(),GL_DYNAMIC_DRAW);glDrawArrays(GL_TRIANGLES,0,static_cast<GLsizei>(vertices.size()));}
     ~Hud(){glDeleteBuffers(1,&vbo);glDeleteVertexArrays(1,&vao);glDeleteProgram(program);}
 };
