@@ -1,122 +1,136 @@
-﻿# Interactive Automotive Chain Reaction
+# Interactive Automotive Chain Reaction
 
 **Mohammad Moin Uddin Moin | Roll 2107111 | Computer Graphics**
 
-An OpenGL 3.3, Honda Cog-inspired machine made from cubes, spheres and generated triangle meshes. A **70-second mechanical sequence** releases a car you can drive. Twelve mechanisms can also be activated individually, in order, in interactive mode.
+An OpenGL 3.3 machine made from cubes, spheres and generated triangle meshes. **Seventeen connected actions release the car at 70 active seconds.** The car exit is action 18. The gear winds once, the wiper sweeps once, and the crank makes one compression stroke. Five new parts occupy the front of the workbench: a rolling ball, trigger cup, pendulum striker, rocker arm and sliding pin. The pin frees a cable drum that withdraws the existing catch bolt.
 
-![Machine overview](docs/final-preview/frame_00.png)
+![Whole machine](docs/expanded-preview/frame_00.png)
 
-## Run
-
-Double-click **cog_demo.exe** to run the built version. Double-click **run.bat** to rebuild and run. Keep glfw3.dll beside the executable. main.exe is an obsolete earlier build.
+## Build and run
 
 ```powershell
 mingw32-make build
 .\cog_demo.exe
 ```
 
-VS Code **Ctrl+Shift+B** builds the same cog_demo.exe. This preserves the existing MinGW, GLFW and GLAD setup; there are no new dependencies or imported models.
+Double-click **cog_demo.exe** to run, or **run.bat** to rebuild and run. Keep glfw3.dll beside the executable. main.exe is an older executable; the current build target is cog_demo.exe. The project keeps its MinGW, GLFW and GLAD setup and has no new dependencies or imported models.
 
-The presentation starts automatically. At 70 seconds the car unlocks, then automatically drives onto the apron over seven seconds. Press an arrow key after release to take over immediately. It remains drivable after the automatic departure finishes. Press **R**, then **Space**, to replay.
+Presentation starts automatically. The car unlocks at 70 seconds and drives onto the apron by 77 seconds. Press an arrow key after release to take over. It remains drivable after the automatic exit. **R, then Space** restarts presentation. **I** switches modes and resets all mechanisms, the car and queued inputs.
 
-## Controls
+## Controls and Demo Guide
 
-| Key / button | Effect |
-|---|---|
-| WASD | Move camera forward/backward/left/right |
-| Q / E | Move camera down / up |
-| Hold right mouse button | Look around freely; release to use UI |
-| Esc | Release mouse; return from a ray-traced snapshot |
-| Shift | Faster camera movement |
-| Mouse wheel | Move camera closer/farther along viewing direction |
-| 1 | Restore machine overview |
-| 2 / 3 / 4 | Pump and catch / gears and glove / car and driving apron |
-| Up / Down arrows | Accelerate car forward / brake and reverse after release |
-| Left / Right arrows | Steer car; front wheels visibly turn |
-| I / Mode button | Switch presentation/interactive mode and reset machine/car |
-| F / Next button | Activate the next ready mechanism in interactive mode |
-| 5 / 6 / 7 / 8 / 9 | Activate pin / gears / lever / wheel / wiper when its turn is ready |
-| Space / Play-Pause | Pause/resume; activate next action if waiting |
-| R / Reset | Reset mechanisms and car; leave paused/ready |
-| L | Compare **Phong and Gouraud** directly |
-| B / Light button | Studio / Daylight / Sunset / Night |
-| C / Help-Tools | Controls, shading, shadows, brightness, ray snapshot |
-| Shading button in Tools | Phong / Flat / Gouraud |
-| - / + buttons in Tools | Light exposure, 40%-200% |
-| H | Numbered mechanism labels |
-| T / Ray-traced snapshot button | Compute a still image; T, Esc or click returns |
-| Window X / Alt+F4 | Close project |
+Click **Guide [C]** or press **C**. The **General Controls** tab lists camera, driving, playback, lighting and snapshot controls. **Mechanisms and Sequence** shows each individual operation, its place in the chain and its timing. Both tabs show the current mechanism and the available action. Close with **X Close**, **C**, or **Esc**. Buttons and mouse hit testing use the same bounds and scaling, including wide windows.
 
-Camera keys remain independent of driving keys and work while animation is paused. The old arrow-key timeline stepping, progress-bar seeking and playback-speed shortcuts were removed so they cannot bypass the release interlock. The progress bar is informational.
+![Controls and sequence guide](docs/expanded-preview/frame_36.png)
 
-## Interactive demonstration
-
-Press **I**, then **F**. The glove physically picks up and places the brass pin. When the prompt changes to READY, press F again to wind the gears. Repeat F for each action: cam/lever, rolling wheel, wiper, bar, pump/rack, bolt, catch, counterweight/barrier, bridge, starter. Each activation moves actual geometry. A later action cannot start until its predecessor finishes; pressing a future shortcut does nothing.
-
-The twelve action durations total 70 active seconds in either mode. Interactive mode adds as much waiting time as you need between actions. Once released in interactive mode, the car waits for arrow input. Pause freezes the mechanisms and the car; camera and lighting inspection remain available.
-
-## Timeline and transformations
-
-| Active seconds | Mechanism and visible effect | Transformation |
+| Control | Effect | Mode |
 |---|---|---|
-| 0-6 | Glove transports designated pin from tray to starter socket | Hand translation, finger pivot rotations, temporary parent attachment |
-| 6-18 | Gear pair winds exposed spring through four revolutions | Opposite Z rotations, 3:2 speed ratio; spring radius changes |
-| 18-22 | Output cam lifts lever input; stop descends through ramp slot | Cam/lever local pivot rotations; gate translation |
-| 22-26 | Loose wheel rolls down ramp to trigger paddle | Translation and rotation from distance/radius |
-| 26-34 | Trigger enables two return sweeps and final extended wiper sweep | Wiper rotation, three-step index rotation, paddle translation |
-| 34-36 | Bar tips onto crank clutch pedal | Bottom-pivot rotation; pedal translation |
-| 36-50 | Crank pumps four revolutions plus final stroke; pawl advances rack four notches | Rotation, fixed-length rod orientation, piston/rack translation |
-| 50-54 | Accumulated rack motion withdraws safety bolt | Z-axis bolt translation and link orientation |
-| 54-57 | Catch support swings away from counterweight | Rotation about catch pivot |
-| 57-60 | Weight descends, cable raises barrier, foot trips bridge | Opposite Y translations; pulley angle = cable travel/radius |
-| 60-65 | Damped drawbridge lowers across actual exit gap | X rotation about hinge, changing support strut length |
-| 65-70 | Starter turns engine, then shaft coupling retracts | Shaft axial rotation and translation |
-| 70 onward | Car is released; automatic exit or keyboard driving | Chassis translation/Y rotation; wheel child rotation and steering |
+| W / S | Move camera forward / backward | Both, including paused |
+| A / D | Strafe camera left / right | Both, including paused |
+| Q / E | Move camera down / up | Both, including paused |
+| Left Shift | Hold for faster camera movement | Both |
+| Hold right mouse | Free look; release restores pointer | Both, guide closed |
+| Mouse wheel | Move closer / farther along view direction | Both, guide closed |
+| 1 / 2 / 3 | Whole chain / crank and catch / glove and gears | Both |
+| 4 / 5 / 6 | Car and apron / full front row / cup-striker-rocker-pin contacts | Both |
+| Up / Down | Accelerate forward / brake and reverse | Both, after release, unpaused |
+| Left / Right | Steer front wheels and chassis | Both, after release, unpaused |
+| I / Mode button | Switch mode and reset mechanisms, car and inputs | Both |
+| R / Reset button | Reset; presentation pauses, interactive becomes ready | Both |
+| Space / Play-Pause button | Pause/resume current action and car; release a ready passive action | Both |
+| F / Next button | Release the current passive mechanism; does not bypass a held or quarter-turn operation | Interactive |
+| Hold G | Grip and transport the starter pin | Interactive, action 1 |
+| Tap Z four times | Wind the gear a quarter turn per tap; key repeat is ignored | Interactive, action 2 |
+| Hold X | Rotate cam and lower the wheel stop | Interactive, action 3 |
+| Hold V | Sweep wiper into the clutch bar | Interactive, action 5 |
+| Hold P | Compress crank, advance rack and lift the ball stop | Interactive, action 7 |
+| Hold U | Tip the loaded cup and withdraw its retaining finger | Interactive, action 9 |
+| J (or F) | Release the pendulum to strike the rocker | Interactive, action 10 |
+| Hold K | Rock the arm into the sliding pin collar | Interactive, action 11 |
+| Hold O | Withdraw the pin from the cable drum | Interactive, action 12 |
+| C / Guide button | Open/close Controls and Demo Guide | Both |
+| H | Toggle numbered part labels | Both |
+| L | Switch real Phong / Gouraud shading | Both |
+| B / Light button | Studio / Daylight / Sunset / Night | Both |
+| Shading button | Cycle Phong / Flat / Gouraud | Guide |
+| Shadows button | Toggle live and snapshot shadows | Guide |
+| - / + buttons | Exposure, 40%-200% | Guide; these are mouse buttons |
+| T / Snapshot button | Compute a ray-traced still of the current pose and view | Both |
+| T / Esc / left click | Return from frozen snapshot and restore prior play/pause state | Snapshot |
+| Esc | Close guide and release mouse look | Live OpenGL |
+| Left click | Operate UI buttons and guide tabs | Both |
+| Window X / Alt+F4 | Close application | All |
 
-The starter is active until the final second: there is no idle hold used to reach one minute. Rotating shafts, wiper indexing and ratchet increments occupy the longer stages. This is an authored mechanism animation, not a force/collision simulation. Some springs, pawls and telescopic links are visual explanations of timed state changes, not engineering-accurate mechanisms.
+Releasing a held mechanism key stops that part at its actual partial pose. Press and hold again to continue. Space is a separate pause: resume with Space before continuing a held action. Future mechanism keys are ignored. F, Next and Space cannot complete a manual operation for you. At a boundary, the next stage requires fresh input; elapsed frame time cannot skip it. Camera controls use different keys from driving and mechanism controls.
 
-## Graphics implemented
+## Sequence
 
-Both Gouraud and Phong use the **same** ambient, Lambert diffuse and reflection-vector Phong specular formula, lights and materials. Gouraud evaluates it in the vertex shader and interpolates the lighting results. Phong interpolates transformed normals and positions, normalizes the normal, and evaluates lighting per fragment. Normals use the inverse-transpose model matrix, including nonuniform scaling. The optional Flat mode uses face normals.
+Times below are active simulation seconds; interactive mode adds the user's waiting time. All seventeen durations sum to **70 seconds**.
 
-Four light rigs contain a directional key, attenuated point fill and rear directional light. OpenGL shadows use a real 2048-square depth map with a 5x5 filter; only the key light casts shadows in that renderer. Metal-tinted highlights, matte rubber, exposure, tone mapping and display gamma are included. Windows are opaque stylized glass; headlights are geometry, not extra light sources.
+| Action | Time | Duration | Visible transfer |
+|---|---|---|---|
+| 1. Glove | 0-6 | 6 s | Pick up the starter pin, insert it into the gear socket, withdraw hand |
+| 2. Gears | 6-10 | 4 s | Wind the spring through one revolution |
+| 3. Cam and lever | 10-14 | 4 s | Cam contacts lever and retracts the ramp stop |
+| 4. Wheel | 14-18 | 4 s | Roll down the ramp and push the wiper trigger paddle |
+| 5. Wiper | 18-21 | 3 s | One sweep contacts the tipping bar |
+| 6. Clutch bar | 21-24 | 3 s | Tip onto the crank clutch pedal |
+| 7. Crank and rack | 24-29 | 5 s | One compression stroke advances rack, lowers follower and lifts ball stop |
+| 8. Rolling ball (new) | 29-34 | 5 s | Roll right to left into the trigger cup |
+| 9. Trigger cup (new) | 34-38 | 4 s | Tip the captive ball away from the chute; withdraw striker retaining finger |
+| 10. Pendulum striker (new) | 38-42 | 4 s | One arc strikes the rocker's lower paddle |
+| 11. Rocker arm (new) | 42-46 | 4 s | Pivot to press the pin's release collar |
+| 12. Sliding pin (new) | 46-50 | 4 s | Lift clear of the cable drum's stop tooth |
+| 13. Cable drum and bolt | 50-53 | 3 s | Wind in the return cable and withdraw catch bolt |
+| 14. Catch | 53-56 | 3 s | Swing clear of the supported weight |
+| 15. Counterweight and barrier | 56-60 | 4 s | Weight falls, barrier rises, foot pedal releases bridge |
+| 16. Drawbridge | 60-65 | 5 s | Lower across the exit gap and contact the starter trip |
+| 17. Starter | 65-70 | 5 s | Turn once in 3 seconds, then retract coupling over 2 seconds |
+| 18. Car exit | 70-77 | 7 s | Automatic departure in presentation; arrows drive in interactive |
 
-For a viva comparison, press **3**, pause with Space, and press **L**. Compare the spherical glove joints and wheel hubs. Phong can retain a small highlight inside a triangle even when none of its vertices catches that highlight; Gouraud interpolates the vertex samples.
+The route moves left to right along the original rear row, then right to left across the ball/cup/striker/rocker row. A low, supported cable returns to the catch and car on the right. The closer overview, stepped workbench, legs and braces give both rows a readable setting. View 6 shows the new contacts closely; view 4 follows the driving area.
 
-## Optional CPU ray tracing
+## Transformations for the new components
 
-Press **T** to trace the current camera and pose. This casts actual rays into the **same scene triangles**, finds nearest ray/triangle intersections with a bounding-volume tree, casts shadow rays toward lights, and traces one reflection bounce for reflective materials. The resulting **800-pixel-wide frozen snapshot** is displayed as a texture. A waiting message appears during calculation; rendering can take several seconds. T/Esc/click returns to OpenGL and restores the earlier play/pause state without advancing the simulation during tracing.
+All matrices use column vectors: **world = T * R * S * local**. Cube scaling gives beams, beds, cup walls and brackets; spheres provide the ball, striker and joint rollers. Rings, disks and guide wheels are generated from triangles.
 
-This is genuine offline ray tracing, not ray-traced real-time animation, a path tracer, or a label for the existing shadow map. It uses one sample per pixel, hard ray shadows and one reflection bounce. It has no denoising, refraction, global illumination or rough multi-ray reflections. Its sampling and shadow treatment differ from the live rasterized image.
+- **Ball:** translate along the inclined chute and rotate around Z by `distance / BALL_RADIUS`. Its off-center dark marker makes rotation visible. At arrival its center becomes a child of the cup, preserving its position continuously.
+- **Cup:** `T(CUP_PIVOT) * Rz(angle)` rotates the floor, walls, retaining finger and captured ball together through 32 degrees. Its pivot is on the right so the ball tips left and down, clear of the chute.
+- **Pendulum:** `T(PENDULUM_PIVOT) * Rz(angle)` swings a cube rod and sphere bob from +45 to -45 degrees at a fixed length of 1.65. It stops against the rocker and a damped rest.
+- **Rocker:** pivot the beam and lower strike paddle about Z from 0 to -25 degrees. A short cross shaft carries the left roller to the pin collar in the front plane.
+- **Sliding pin:** translate its shaft and collar upward by 0.65 along Y through two stationary guides. The freed drum rotates by cable take-up divided by its 0.42 radius, pulling the bolt along Z.
 
-![CPU ray-traced snapshot](docs/ray-preview/frame_00.png)
+The rack's diagonal link keeps a fixed length using `sqrt(L*L-dx*dx)`. Its guided follower descends by the same amount that the ball stop rises, preserving cable length. The original crank also retains its fixed connecting rod length. Counterweight travel still equals barrier lift, and wheel rotation still follows signed driving distance.
 
-## Implementation guide
+## Rendering and simulation
 
-| File | Purpose |
-|---|---|
-| src/animation.h | Stage boundaries, deterministic poses, glove attachment, free camera and car controller |
-| src/scene.h | Primitive assemblies, supports, links, bridge, driving apron and car hierarchy |
-| src/math3d.h | Column-major vectors/matrices and transformations |
-| src/renderer.h | Triangle meshes, Gouraud/Phong shaders and shadow mapping |
-| src/lighting.h | Four shared lighting presets |
-| src/hud.h | Built-in font, buttons and labels |
-| src/raytrace.h | Optional CPU triangle tracer and snapshot display |
-| src/main.cpp | GLFW input, UI, actual-time loop and rendering |
-| src/validation.h | CPU invariant checks and GPU input-handler checks |
+Gouraud computes the lighting formula per vertex and interpolates the result. Phong interpolates normals/positions, normalizes the normal and evaluates the same formula per fragment. Flat shading uses face normals. Inverse-transpose normal transforms support nonuniform scaling. Four light rigs, a shadow map, exposure and matte/metal materials remain available.
 
-The car uses a simple kinematic steering model with acceleration, drag and reverse. Wheel spin comes from signed chassis travel. The driving area is bounded; there is no full collision solver, suspension or individual inner/outer wheel differential.
+T performs CPU ray/triangle intersections into the same scene, with a bounding-volume tree, shadow rays and one reflection bounce. The 800-pixel-wide result is a frozen snapshot. T, Esc or left click returns and excludes tracing time from the simulation clock. It is single-sample offline ray tracing with hard shadows.
 
-## Validation and viva
+This is deterministic, authored mechanism animation without a physics engine. Springs, latches and contact events explain the authored transitions; forces and collisions are not dynamically solved. The car uses kinematic steering, acceleration, drag, reverse and bounded driving surfaces.
+
+## Validation
 
 ```powershell
 mingw32-make test
 .\cog_demo.exe --verify-playback
+.\cog_demo.exe --verify-interactive
 .\cog_demo.exe --verify-timing
-.\cog_demo.exe --capture docs/final-preview
-.\cog_demo.exe --capture-ray docs/ray-preview
+.\cog_demo.exe --capture docs/expanded-preview
+.\cog_demo.exe --capture-ray docs/expanded-ray
 ```
 
---verify-playback renders the complete timeline using synthetic time steps for fast verification. **--verify-timing uses actual GLFW elapsed time** and runs for about 77 seconds. It logs the first rendered frame at/after the 70-second release.
+Playback verification renders the complete sequence. Interactive verification exercises the actual key callbacks, quarter turns and released holds while rendering all stages. Timing verification uses actual GLFW elapsed time for the full 77-second run. See [validation results](docs/VALIDATION.md) and [demonstration notes](docs/VIVA.md).
 
-See [validation results](docs/VALIDATION.md), [viva guide](docs/VIVA.md), and [current draft/checklist](docs/PROPOSAL.md). The user confirmed that no proposal has been submitted; the YouTube video is a conceptual reference. The prior working source is preserved in [the backup](backups/before-final-requirements-2026-10-05.zip).
+| File | Role |
+|---|---|
+| src/animation.h | Stage timing, deterministic poses, manual operations, free camera and driving |
+| src/scene.h | Workbench, supports, original machine, new front row and car |
+| src/main.cpp | GLFW handlers, guide, frame loop and verification/capture modes |
+| src/hud.h | Triangle text/UI rendering and shared display/hit-test scaling |
+| src/renderer.h | Primitive meshes, actual Gouraud/Phong shaders and shadow map |
+| src/raytrace.h | CPU triangle ray tracer and snapshot display |
+| src/validation.h | Timing, contacts, transforms, input, reset, car and UI checks |
+
+Source before this change is preserved in backups/before-expanded-chain-2026-10-08.zip.
