@@ -7,7 +7,7 @@ const Material steel{{.48f,.58f,.67f},64,.95f,.85f};
 const Material dark{{.035f,.055f,.072f},20,.18f};
 const Material rubber{{.018f,.022f,.025f},8,.04f};
 const Material brass{{.49f,.31f,.12f},72,.85f,.75f};
-const Material teal{{.045f,.16f,.20f},80,.65f};
+const Material teal{{.035f,.19f,.22f},64,.48f};
 const Material cream{{.63f,.64f,.58f},90,.65f};
 const Material red{{.26f,.15f,.09f},48,.45f};
 const Material glass{{.018f,.041f,.055f},96,.055f};
@@ -64,6 +64,16 @@ struct Scene {
         shape(3,root*translate({-.28f,1.1f,0})*scale({1.08f,.78f,1.27f}),glass);
         box({-.3f,1.51f,0},{1.26f,.065f,1.22f},teal,root);
         box({1.02f,.935f,0},{1.05f,.055f,1.35f},teal,root);
+        // Restrained body trim, separate glass panes and a readable front end.
+        for(float z:{-.61f,.61f}){
+            beam(transform(root,{-.97f,.76f,z}),transform(root,{-.98f,1.46f,z}),.045f,steel);
+            beam(transform(root,{.73f,.76f,z}),transform(root,{.31f,1.46f,z}),.045f,teal);
+            box({0,.51f,z*1.18f},{2.3f,.055f,.035f},steel,root);
+            box({.24f,.81f,z*1.2f},{.30f,.035f,.045f},steel,root);
+        }
+        box({.15f,.971f,0},{.02f,.012f,1.28f},dark,root);
+        box({1.77f,.53f,0},{.025f,.13f,.33f},cream,root);
+        box({-1.77f,.55f,0},{.025f,.13f,.33f},cream,root);
         for(float z:{-.65f,.65f}) {
             box({-.38f,1.12f,z},{.07f,.62f,.04f},teal,root);
             box({-.32f,.73f,z*1.13f},{1.1f,.025f,.025f},steel,root);
@@ -80,11 +90,133 @@ struct Scene {
         for(float x:{-1.05f,1.05f})for(float z:{-.77f,.77f})
             wheel(root*translate({x,.43f,z})*rotateY(x>0?p.steer:0)*rotateZ(p.carSpin),CAR_WHEEL_RADIUS,.22f);
     }
+    void relay(const Pose& p){
+        // Front row runs RIGHT TO LEFT: rack -> ball -> cup -> striker ->
+        // rocker -> pin. The low cable returns to the catch on the right.
+        const Material cable{{.42f,.30f,.14f},32,.35f};
+        Vec3 direction=normalize(BALL_END-BALL_START);
+        Vec3 normal{direction.y,-direction.x,0};
+        Vec3 a=BALL_START-normal*BALL_RADIUS,b=BALL_END-normal*BALL_RADIUS-direction*.15f;
+        // Low rails and a thin bed keep the sphere in visible contact.
+        Vec3 track=b-a;Mat4 bed=translate((a+b)*.5f-normal*.03f)*rotateZ(std::atan2(track.y,track.x));
+        box({0,0,0},{length(track),.06f,.42f},dark,bed);
+        for(float z:{-.19f,.19f})beam(a+Vec3{0,-.035f,z},b+Vec3{0,-.035f,z},.085f,steel);
+        for(float u:{0.f,.33f,.67f,1.f}){
+            Vec3 q=a+(b-a)*u;
+            beam(q+Vec3{0,-.09f,-.3f},q+Vec3{0,-.09f,.3f},.09f,dark);
+            box({q.x,q.y*.5f-.07f,2.83f},{.12f,q.y-.14f,.14f},dark);
+            mount({q.x,.075f,2.83f},{.45f,.15f,.52f});
+        }
+        // Rack travel lifts the ball's stop blade through a guide. An exposed
+        // rigid diagonal link and cable make this transfer visible from camera 2 or 5.
+        box({5.23,2.055f+p.ballGate,3.15f},{.10f,.95f,.68f},brass);
+        for(float z:{2.69f,3.61f}){
+            box({5.23,1.77f,z},{.12f,3.54f,.12f},dark);
+            mount({5.23,.07f,z},{.4f,.14f,.42f});
+        }
+        beam({5.23,3.54f,2.69f},{5.23,3.54f,3.61f},.13f,steel);
+        ring({5.23,3.70f,3.15f},.17f,.13f,steel);
+        ring({5.9f,3.95f,.78f},.17f,.13f,steel);
+        beam({5.9f,.15f,.60f},{5.9f,3.95f,.60f},.10f,dark);
+        // The rack pulls a guided follower down while the stop rises equally.
+        Vec3 follower=rackFollower(p.rack);
+        box(follower,{.27f,.18f,.25f},brass);
+        beam({6.30f+.95f*p.rack,2.25f,.78f},follower,.075f,steel);
+        beam(follower,{5.9f,4.12f,.78f},.035f,cable);
+        beam({5.9f,4.12f,.78f},{5.23,3.87f,3.15f},.035f,cable);
+        beam({5.23,3.87f,3.15f},{5.23,2.53f+p.ballGate,3.15f},.035f,cable);
+        // A brass stripe is parented to the rolling sphere, exposing s/r spin.
+        Mat4 ballRoot=translate(p.relayBall)*rotateZ(p.ballSpin+p.cup);
+        ball({0,0,0},BALL_RADIUS,steel,ballRoot);
+        ring({0,0,0},BALL_RADIUS*1.012f,.065f,brass,ballRoot);
+        ball({BALL_RADIUS*.76f,0,BALL_RADIUS*.66f},.05f,dark,ballRoot);
+
+        // Captive trigger cup: floor, side cheeks and low front lip are cubes.
+        Mat4 cup=cupMatrix(p.cup);
+        box({-.50f,.05f,0},{.86f,.10f,.72f},brass,cup);
+        // Left wall catches the ball; the right entry remains open to the ramp.
+        box({-.905f,.27f,0},{.05f,.44f,.70f},teal,cup);
+        box({-.50f,.23f,-.34f},{.86f,.35f,.055f},teal,cup);
+        box({-.50f,.145f,.34f},{.86f,.09f,.055f},steel,cup);
+        beam(transform(cup,{0,0,-.28f}),transform(cup,{-.84f,.42f,-.28f}),.10f,brass);
+        box({-.84f,.42f,0},{.12f,.12f,.68f},brass,cup);
+        disk({0,0,.41f},.14f,.15f,steel,cup);
+        mount({CUP_PIVOT.x,.08f,2.65f},{.65f,.16f,.55f});
+        beam({CUP_PIVOT.x,.15f,2.65f},CUP_PIVOT+Vec3{0,0,-.45f},.15f,dark);
+        disk(CUP_PIVOT+Vec3{0,0,-.25f},.08f,.7f,steel);
+
+        // Pendulum starts resting against the cup finger. The cup rotates that
+        // finger away; a single arc ends at the rocker's strike pad.
+        mount({PENDULUM_PIVOT.x,.09f,2.62f},{.8f,.18f,.7f});
+        beam({PENDULUM_PIVOT.x,.18f,2.62f},{PENDULUM_PIVOT.x,2.90f,2.62f},.17f,dark);
+        beam({PENDULUM_PIVOT.x,2.90f,2.62f},PENDULUM_PIVOT,.14f,steel);
+        Mat4 pendulum=translate(PENDULUM_PIVOT)*rotateZ(p.pendulum);
+        box({0,-PENDULUM_LENGTH*.5f,0},{.12f,PENDULUM_LENGTH,.14f},steel,pendulum);
+        ball({0,-PENDULUM_LENGTH,0},.27f,brass,pendulum);
+        disk({0,0,.14f},.18f,.16f,brass,pendulum);
+        // A damped end stop holds the striker after contact; no idle oscillation.
+        box({PENDULUM_PIVOT.x-1.17f,1.15f,3.15f},{.30f,.12f,.56f},rubber);
+
+        Mat4 rocker=translate(ROCKER_PIVOT)*rotateZ(p.rocker);
+        box({-.03f,0,0},{2.30f,.16f,.24f},teal,rocker);
+        box({1.03f,-.44f,0},{.16f,.88f,.48f},brass,rocker);
+        disk({0,0,.20f},.18f,.22f,steel,rocker);
+        beam(transform(rocker,{-1.12f,0,0}),rockerTip(p.rocker),.11f,steel);
+        ball(rockerTip(p.rocker),.09f,brass);
+        mount({ROCKER_PIVOT.x,.09f,2.71f},{.8f,.18f,.75f});
+        beam({ROCKER_PIVOT.x,.18f,2.71f},ROCKER_PIVOT+Vec3{0,0,-.3f},.16f,dark);
+        disk(ROCKER_PIVOT+Vec3{0,0,-.08f},.085f,.6f,steel);
+
+        // Rocker raises the collar to unlatch a vertically sliding pin. Its
+        // withdrawal frees the spring drum; the drum then pulls the old bolt.
+        Vec3 pin=RELEASE_PIN+Vec3{0,p.releasePin,0};
+        box(pin,{.12f,1.18f,.13f},brass);
+        box(pin+Vec3{0,.60f,0},{.48f,.10f,.34f},steel);
+        for(float y:{1.66f,2.04f}){
+            box({RELEASE_PIN.x,y,3.55f},{.42f,.18f,.18f},dark);
+            shape(1,translate({RELEASE_PIN.x,y,3.70f})*rotateX(PI/2)*scale({.16f,.16f,.15f}),steel);
+        }
+        mount({RELEASE_PIN.x,.08f,3.35f},{.75f,.16f,.8f});
+        beam({RELEASE_PIN.x,.16f,3.35f},{RELEASE_PIN.x,2.14f,3.35f},.13f,dark);
+        Mat4 drum=translate({RELEASE_PIN.x,1.0f,3.70f})*rotateZ(p.releaseDrum);
+        ring({0,0,0},.42f,.19f,teal,drum);
+        for(int i=0;i<4;++i)box({.2f,0,0},{.42f,.07f,.20f},brass,drum*rotateZ(i*PI/2));
+        disk({0,0,.14f},.12f,.14f,steel,drum);
+        box({0,.31f,0},{.16f,.20f,.22f},brass,drum);
+        // Return cable is below the chute, with a front guide and rear fairlead.
+        beam({RELEASE_PIN.x,.58f,3.70f},{6.93f,.58f,3.70f},.04f,cable);
+        for(float x:{-7.f,-3.f,1.f,5.f,6.93f}){
+            box({x,.32f,3.91f},{.09f,.64f,.1f},dark);
+            ring({x,.58f,3.78f},.085f,.1f,steel);
+        }
+        beam({6.93f,.58f,3.70f},{6.93f,1.75f,3.70f},.04f,cable);
+        beam({6.93f,1.75f,3.70f},{6.93f,1.75f,.55f+p.bolt},.04f,cable);
+        for(float y:{.58f,1.75f}){
+            shape(4,translate({6.93f,y,3.70f})*rotateY(PI/2)*scale({.13f,.13f,.1f}),steel);
+            beam({6.93f,y,3.70f},{7.17f,y,3.70f},.07f,steel);
+        }
+        mount({7.17f,.08f,3.70f},{.40f,.16f,.55f});
+        beam({7.17f,.16f,3.70f},{7.17f,1.95f,3.70f},.10f,dark);
+    }
     void build(const Pose& p,float /*time*/) {
         items.clear();
-        box({0,-.53f,0},{200,.25f,200},{{.018f,.025f,.032f},20,.025f});
-        box({-.5f,-.22f,0},{23.5f,.42f,4.2f},dark);
-        box({-.5f,-.005f,0},{23.3f,.025f,4.0f},{{.045f,.058f,.065f},25,.1f});
+        box({0,-2.7f,0},{200,.25f,200},{{.018f,.025f,.032f},20,.025f});
+        const Material benchTop{{.10f,.13f,.145f},26,.12f},edge{{.17f,.115f,.07f},24,.10f};
+        // Stepped workbench leaves the bridge gap open beside the new front row.
+        box({-2.40f,-.24f,1.10f},{19.7f,.46f,6.8f},edge);
+        box({-2.40f,-.005f,1.10f},{19.65f,.025f,6.75f},benchTop);
+        box({9,-.24f,0},{3.3f,.46f,4.2f},edge);
+        box({9,-.005f,0},{3.25f,.025f,4.15f},benchTop);
+        for(float x:{-11.3f,-5.7f,.1f,6.2f,9.9f}){
+            float front=x>7?1.5f:3.9f;
+            for(float z:{-1.6f,front}){
+                box({x,-1.5f,z},{.25f,2.1f,.25f},dark);
+                box({x,-2.5f,z},{.65f,.16f,.58f},rubber);
+            }
+            beam({x,-1.85f,-1.6f},{x,-1.85f,front},.15f,steel);
+        }
+        for(float z:{-1.6f,3.9f})beam({-11.3f,-1.55f,z},{6.2f,-1.55f,z},.14f,dark);
+        box({-2.4f,-.30f,4.51f},{19.5f,.08f,.045f},steel);
         // Fixed approach, hinged bridge across a real gap, and a driving apron.
         box({9,-.22f,2.55f},{3.3f,.42f,.9f},dark);
         box({9,.005f,2.55f},{3.1f,.05f,.9f},dark);
@@ -115,7 +247,7 @@ struct Scene {
         // Exposed torsion spring tightens as the gear train winds it.
         for(int i=0;i<100;++i){
             auto spring=[&](float u){float a=u*8*PI+p.gearLarge*.12f;
-                float r=.2f+u*(.5f-.17f*std::min(p.gearLarge/(8*PI),1.f));
+                float r=.2f+u*(.5f-.17f*std::min(p.gearLarge/(2*PI),1.f));
                 return Vec3{-8.25f+r*std::cos(a),3.25f+r*std::sin(a),.53f};};
             beam(spring(i/100.f),spring((i+1)/100.f),.028f,brass);
         }
@@ -198,21 +330,18 @@ struct Scene {
         for(float x:{4.7f,6.45f}){mount({x,.09f,.1f},{.55f,.18f,1.15f});box({x,.75f,-.3f},{.12f,1.5f,.15f},dark);}
         box(slider,{.42f,.48f,.63f},steel);
         shape(1,translate(slider+Vec3{.18f,0,0})*rotateY(PI/2)*scale({.13f,.13f,.25f}),brass);
-        // Each compression stroke lifts a pawl and pushes the toothed rack.
-        // The catch stays pinned until the rack completes all four advances.
-        box({5.65f+.65f*p.rack,2.25f,.78f},{1.3f,.14f,.22f},brass);
-        for(int i=0;i<9;++i)box({5.05f+.15f*i+.65f*p.rack,2.36f,.78f},{.065f,.09f,.22f},steel);
+        // One compression stroke pushes the rack and lifts the ball stop.
+        box({5.65f+.95f*p.rack,2.25f,.78f},{1.3f,.14f,.22f},brass);
+        for(int i=0;i<9;++i)box({5.05f+.15f*i+.95f*p.rack,2.36f,.78f},{.065f,.09f,.22f},steel);
         for(float x:{5.05f,6.45f}){
             box({x,1.14f,1},{.1f,2.28f,.12f},dark);ring({x,2.25f,.78f},.2f,.3f,steel);
         }
         Vec3 pawl=slider+Vec3{0,.25f,.65f};
         beam(pawl,{std::min(6.8f,pawl.x+.16f),2.38f,.78f},.065f,steel);
         disk(pawl,.1f,.14f,brass);
-        // Four brass indicator pegs expose the mechanically accumulated state.
-        for(int i=0;i<4;++i)ball({5.12f+i*.33f,2.65f,.78f},.075f,p.rack>=(i+1)*.25f?brass:dark);
-        beam({6.95f,2.25f,.78f},{6.93f,1.78f,.55f+p.bolt},.07f,steel);
         disk({6.93f,1.75f,.2f+p.bolt},.07f,.75f,brass);
         box({6.93f,1.75f,.8f},{.28f,.28f,.16f},dark);
+        relay(p);
         // The pin withdraws along Z, allowing the catch to rotate down.
         Mat4 latch=translate({6.7f,1.68f,.1f})*rotateZ(p.catchAngle);
         box({.4f,0,0},{.9f,.1f,.5f},brass,latch);
