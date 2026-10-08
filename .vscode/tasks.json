@@ -7,6 +7,9 @@
             "command": "g++",
             "args": [
                 "-std=c++17",
+                "-O2",
+                "-Wall",
+                "-Wextra",
                 "src/main.cpp",
                 "src/glad.c",
                 "-Iinclude",
