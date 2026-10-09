@@ -1,0 +1,39 @@
+# Handoff frame review
+
+Reviewed on 9 October 2026. These are rendered observations, separate from sampled numeric invariants.
+
+The current set contains **68 actual OpenGL framebuffer captures**. For every boundary there is a before/at/after trio (51 frames total). `review-2026-10-09/frames.csv` records exact times and camera presets, generated from STAGE_TIME. Four review sheets place the trios side by side; the full-size PNGs are also retained. Additional frames cover the full overview, highlighted relay stages, departed car, shading modes and six guide pages.
+
+[Sheet 1: handoffs 1-5](review-2026-10-09/review_sheet_1.png) / [Sheet 2: 6-10](review-2026-10-09/review_sheet_2.png) / [Sheet 3: 11-15](review-2026-10-09/review_sheet_3.png) / [Sheet 4: 16-17](review-2026-10-09/review_sheet_4.png).
+
+Each trio below was inspected. Measurements are world-unit guard tolerances, not claims about a physical machine's tolerances. Overview frames establish sequence readability; the contact view is still useful for detailed explanation. Geometric guards reject incorrect boundary poses, but do not simulate forces between frames.
+
+| Boundary | Seconds | Rendered observation | Guard / focused check | Frames |
+|---|---:|---|---|---|
+| 1. Glove to winding gears | 6 | Pin stays in the socket while the open hand withdraws. | Pin position within 0.02 of socket; attachment ended. | [Before](review-2026-10-09/handoff_01_before.png) / [At](review-2026-10-09/handoff_01_at.png) / [After](review-2026-10-09/handoff_01_after.png) |
+| 2. Winding gears to output cam | 10 | Winding ends; the separate cam begins its turn. | One full winding revolution completed; no force/tooth simulation. | [Before](review-2026-10-09/handoff_02_before.png) / [At](review-2026-10-09/handoff_02_at.png) / [After](review-2026-10-09/handoff_02_after.png) |
+| 3. Cam / lever to wheel | 14 | Lever lowers the stop through its track slot before the wheel departs. | Lever reaches the release angle. | [Before](review-2026-10-09/handoff_03_before.png) / [At](review-2026-10-09/handoff_03_at.png) / [After](review-2026-10-09/handoff_03_after.png) |
+| 4. Wheel to wiper paddle | 18 | Wheel finishes against the paddle; the wiper begins its sweep. | Wheel edge and paddle face within 0.025. | [Before](review-2026-10-09/handoff_04_before.png) / [At](review-2026-10-09/handoff_04_at.png) / [After](review-2026-10-09/handoff_04_after.png) |
+| 5. Wiper to bar | 21 | Blade reaches the bar tab before the bar tips. | Blade endpoint intersects the tab contact envelope. | [Before](review-2026-10-09/handoff_05_before.png) / [At](review-2026-10-09/handoff_05_at.png) / [After](review-2026-10-09/handoff_05_after.png) |
+| 6. Bar to crank clutch | 24 | Lowered bar reaches the foot pedal; crank motion follows. | Bar endpoint reaches clutch contact envelope. | [Before](review-2026-10-09/handoff_06_before.png) / [At](review-2026-10-09/handoff_06_at.png) / [After](review-2026-10-09/handoff_06_after.png) |
+| 7. Crank / rack to ball | 29 | Follower has lowered; ball stop is raised above the sphere before rolling. | Stop underside clears the ball top by at least 0.02. | [Before](review-2026-10-09/handoff_07_before.png) / [At](review-2026-10-09/handoff_07_at.png) / [After](review-2026-10-09/handoff_07_after.png) |
+| 8. Ball to cup | 36 | Ball arrives on the cup floor; cup begins rotating with it. | Ball center inside cup footprint; bottom within 0.025 of floor. | [Before](review-2026-10-09/handoff_08_before.png) / [At](review-2026-10-09/handoff_08_at.png) / [After](review-2026-10-09/handoff_08_after.png) |
+| 9. Cup finger to striker | 39 | Finger rotates down and away; striker then swings left. | Finger/striker separation exceeds 0.12; ball remains seated. | [Before](review-2026-10-09/handoff_09_before.png) / [At](review-2026-10-09/handoff_09_at.png) / [After](review-2026-10-09/handoff_09_after.png) |
+| 10. Striker to rocker pad | 43 | Enlarged brass bob reaches the lower pad before the rocker turns. | Nominal sphere/box gap below 0.01; short swing rejected. | [Before](review-2026-10-09/handoff_10_before.png) / [At](review-2026-10-09/handoff_10_at.png) / [After](review-2026-10-09/handoff_10_after.png) |
+| 11. Rocker roller to pin collar | 45 | Larger roller reaches the enlarged collar; pin then lifts. | Nominal roller/collar gap below 0.01; short rocker turn rejected. | [Before](review-2026-10-09/handoff_11_before.png) / [At](review-2026-10-09/handoff_11_at.png) / [After](review-2026-10-09/handoff_11_after.png) |
+| 12. Pin to spring drum | 47 | Pin is visibly above the stop/rim; spring axle and wrapped cable begin moving. | Pin bottom clears full drum rim by more than 0.10. | [Before](review-2026-10-09/handoff_12_before.png) / [At](review-2026-10-09/handoff_12_at.png) / [After](review-2026-10-09/handoff_12_after.png) |
+| 13. Drum cable to catch bolt | 50 | Continuous cable reaches bolt through guides; bolt withdraws before catch turns. | Bolt no longer intersects catch depth; wrap/tail lengths balance. | [Before](review-2026-10-09/handoff_13_before.png) / [At](review-2026-10-09/handoff_13_at.png) / [After](review-2026-10-09/handoff_13_after.png) |
+| 14. Catch to counterweight | 53 | Support finger rotates aside before the guided weight descends. | Finger clears the weight footprint by more than 0.025. | [Before](review-2026-10-09/handoff_14_before.png) / [At](review-2026-10-09/handoff_14_at.png) / [After](review-2026-10-09/handoff_14_after.png) |
+| 15. Counterweight to bridge | 58 | Raised barrier clears roof; weight reaches the foot that releases bridge. | Roof clearance above 0.05 and weight at its lower endpoint. | [Before](review-2026-10-09/handoff_15_before.png) / [At](review-2026-10-09/handoff_15_at.png) / [After](review-2026-10-09/handoff_15_after.png) |
+| 16. Bridge to starter | 65 | Bridge reaches apron level; external shaft mates with the car socket. | Deck endpoint within 0.02; shaft centerline and socket overlap checked. | [Before](review-2026-10-09/handoff_16_before.png) / [At](review-2026-10-09/handoff_16_at.png) / [After](review-2026-10-09/handoff_16_after.png) |
+| 17. Starter / shoe to car | 70 | Shaft retracts and tire shoe slides away; car then begins moving. | Starter turned; shaft, shoe, roof and bridge all clear. | [Before](review-2026-10-09/handoff_17_before.png) / [At](review-2026-10-09/handoff_17_at.png) / [After](review-2026-10-09/handoff_17_after.png) |
+
+## Visibility and UI observations
+
+- Cup retaining finger, striker sphere, rocker pad, roller and pin collar have larger silhouettes. A restrained warm accent follows the active contact pair. Overview samples 8-12 were inspected alongside view-6 trios; they establish the sequence but do not replace close inspection.
+- The drum's exposed spiral spring, fixed outer bracket, rotating inner hub, cable wrap, bottom tangent and routed guide arcs are visible in the left front row. Ferrules show cable translation.
+- The starter socket and tire shoe become visible after the bridge lowers. The shaft is engaged at boundary 16 and retracted at boundary 17. View 4 or free camera movement helps explain this small assembly.
+- All six guide pages were inspected at the normal 1440 x 900 window. Body lettering is roughly 17-19 screen pixels high, compared with roughly 12 before. No overlapping columns or clipped content was observed. Actual readability on the instructor's projector still depends on its resolution and viewing distance.
+- The held-key guide screenshot displays **G GUIDE** and explains that clicking opens instructions. Passive-stage screenshots display **F GO**. The current required action is repeated below.
+
+This is sampled visual review, not an exhaustive collision proof or a recording of every human input gesture. The complete presentation and interactive sequence were separately rendered end to end; see VALIDATION.md.
