@@ -1,136 +1,130 @@
 # Interactive Automotive Chain Reaction
 
-**Mohammad Moin Uddin Moin | Roll 2107111 | Computer Graphics**
+**Mohammad Moin Uddin Moin | 2107111 | Computer Graphics**
 
-An OpenGL 3.3 machine made from cubes, spheres and generated triangle meshes. **Seventeen connected actions release the car at 70 active seconds.** The car exit is action 18. The gear winds once, the wiper sweeps once, and the crank makes one compression stroke. Five new parts occupy the front of the workbench: a rolling ball, trigger cup, pendulum striker, rocker arm and sliding pin. The pin frees a cable drum that withdraws the existing catch bolt.
+A primitive-built OpenGL 3.3 machine with 17 connected actions and a drivable car. The presentation releases the car at **70 active seconds**. The rolling ball, cup, striker, rocker and pin relay has position/clearance guards, a visible spring-driven cable drum and larger contact surfaces.
 
-![Whole machine](docs/expanded-preview/frame_00.png)
+The hanging striker now begins its swing as soon as the cup's retaining finger clears it (about 36.56 seconds), while the cup finishes tipping. There is no hold until the 39-second stage boundary. In interactive mode, the next F action continues that arc after the normal inspection pause. The stage schedule and 70-second car release stay the same.
 
-## Build and run
+![Current overview with lamp-cast shadows](docs/lighting-correction/overview.png)
+
+## Run or submit
+
+Use **submission/Automotive_Chain_Reaction_2107111** for the examiner, or extract its sibling ZIP. Double-click **START_PROJECT.bat** or **cog_demo.exe** in that folder. It contains one current executable, required runtime DLLs, source, headers, link libraries, build settings, current documentation and one set of review images. Older executables, backups and older preview generations are excluded.
+
+In the development folder:
 
 ```powershell
 mingw32-make build
 .\cog_demo.exe
 ```
 
-Double-click **cog_demo.exe** to run, or **run.bat** to rebuild and run. Keep glfw3.dll beside the executable. main.exe is an older executable; the current build target is cog_demo.exe. The project keeps its MinGW, GLFW and GLAD setup and has no new dependencies or imported models.
+run.bat rebuilds and launches; VS Code Ctrl+Shift+B builds the same target. Rebuilding requires the existing MinGW compiler; running the packaged executable does not. Keep all packaged DLLs beside it. Windows with an OpenGL 3.3-capable driver is required. The development folder's main.exe is historical and is not included in the submission.
 
-Presentation starts automatically. The car unlocks at 70 seconds and drives onto the apron by 77 seconds. Press an arrow key after release to take over. It remains drivable after the automatic exit. **R, then Space** restarts presentation. **I** switches modes and resets all mechanisms, the car and queued inputs.
+## Controls
 
-## Controls and Demo Guide
+Presentation starts automatically. At 70 seconds the car unlocks, then drives onto the apron over seven seconds. Arrows take over immediately after release. Press R, then Space, to replay. I switches mode and resets the machine/car.
 
-Click **Guide [C]** or press **C**. The **General Controls** tab lists camera, driving, playback, lighting and snapshot controls. **Mechanisms and Sequence** shows each individual operation, its place in the chain and its timing. Both tabs show the current mechanism and the available action. Close with **X Close**, **C**, or **Esc**. Buttons and mouse hit testing use the same bounds and scaling, including wide windows.
+| Control | Effect |
+|---|---|
+| WASD / Q-E | Free camera movement / down-up, even while paused |
+| Hold right mouse / release | Look around / restore UI pointer |
+| Left Shift / wheel | Faster camera / move closer or farther |
+| 1 / 2 / 3 | Overview / crank / glove and gears |
+| 4 / 5 / 6 | Car and apron / full front row / relay contacts |
+| Arrows | Accelerate, brake/reverse, steer after car release |
+| I / Mode | Switch presentation/interactive and reset |
+| Space | Pause/resume; release a ready F action |
+| R | Reset mechanisms, car, held input and queued gear turns |
+| F / F GO button | Release a ready passive mechanism |
+| G GUIDE / Z GUIDE / X GUIDE / V GUIDE / P GUIDE | Open the current operation's guide; the button does not pretend to perform a held/tapped action |
+| C / Guide | Open six-page guide: Camera, Operate, Drive, Light, Chain 1, Chain 2 |
+| Esc / Close | Close guide and release mouse |
+| H | Numbered object labels |
+| Left click the bench lamp / B | Cycle Studio, Daylight, Sunset, Night in either mode; press 1 to find the lamp and close the guide before clicking |
+| L | Compare Phong-Gouraud |
+| Light page | Shadow toggle, Phong/Flat/Gouraud, exposure, ray snapshot |
+| T | Compute a CPU ray-traced still; T/Esc/click returns |
+| Window X / Alt+F4 | Close project |
 
-![Controls and sequence guide](docs/expanded-preview/frame_36.png)
+## Interactive demonstration
 
-| Control | Effect | Mode |
-|---|---|---|
-| W / S | Move camera forward / backward | Both, including paused |
-| A / D | Strafe camera left / right | Both, including paused |
-| Q / E | Move camera down / up | Both, including paused |
-| Left Shift | Hold for faster camera movement | Both |
-| Hold right mouse | Free look; release restores pointer | Both, guide closed |
-| Mouse wheel | Move closer / farther along view direction | Both, guide closed |
-| 1 / 2 / 3 | Whole chain / crank and catch / glove and gears | Both |
-| 4 / 5 / 6 | Car and apron / full front row / cup-striker-rocker-pin contacts | Both |
-| Up / Down | Accelerate forward / brake and reverse | Both, after release, unpaused |
-| Left / Right | Steer front wheels and chassis | Both, after release, unpaused |
-| I / Mode button | Switch mode and reset mechanisms, car and inputs | Both |
-| R / Reset button | Reset; presentation pauses, interactive becomes ready | Both |
-| Space / Play-Pause button | Pause/resume current action and car; release a ready passive action | Both |
-| F / Next button | Release the current passive mechanism; does not bypass a held or quarter-turn operation | Interactive |
-| Hold G | Grip and transport the starter pin | Interactive, action 1 |
-| Tap Z four times | Wind the gear a quarter turn per tap; key repeat is ignored | Interactive, action 2 |
-| Hold X | Rotate cam and lower the wheel stop | Interactive, action 3 |
-| Hold V | Sweep wiper into the clutch bar | Interactive, action 5 |
-| Hold P | Compress crank, advance rack and lift the ball stop | Interactive, action 7 |
-| Hold U | Tip the loaded cup and withdraw its retaining finger | Interactive, action 9 |
-| J (or F) | Release the pendulum to strike the rocker | Interactive, action 10 |
-| Hold K | Rock the arm into the sliding pin collar | Interactive, action 11 |
-| Hold O | Withdraw the pin from the cable drum | Interactive, action 12 |
-| C / Guide button | Open/close Controls and Demo Guide | Both |
-| H | Toggle numbered part labels | Both |
-| L | Switch real Phong / Gouraud shading | Both |
-| B / Light button | Studio / Daylight / Sunset / Night | Both |
-| Shading button | Cycle Phong / Flat / Gouraud | Guide |
-| Shadows button | Toggle live and snapshot shadows | Guide |
-| - / + buttons | Exposure, 40%-200% | Guide; these are mouse buttons |
-| T / Snapshot button | Compute a ray-traced still of the current pose and view | Both |
-| T / Esc / left click | Return from frozen snapshot and restore prior play/pause state | Snapshot |
-| Esc | Close guide and release mouse look | Live OpenGL |
-| Left click | Operate UI buttons and guide tabs | Both |
-| Window X / Alt+F4 | Close application | All |
+The lighting control is a physical inspection lamp above the middle of the workbench. Click its bulb or guard housing to change the lighting preset; the top bar only reports the current setting. The bulb is the actual point-light position and casts shadows in every preset. Studio/Night use the lamp as their only direct source; Daylight/Sunset add a distant sun. Picking uses the nearest visible triangle, so clicking through other parts does not activate the lamp. B offers the same control from close-up views.
 
-Releasing a held mechanism key stops that part at its actual partial pose. Press and hold again to continue. Space is a separate pause: resume with Space before continuing a held action. Future mechanism keys are ignored. F, Next and Space cannot complete a manual operation for you. At a boundary, the next stage requires fresh input; elapsed frame time cannot skip it. Camera controls use different keys from driving and mechanism controls.
+Only **five special keys plus F** are needed. Hold G for the glove, tap Z four times to wind, hold X for the cam, press F for the wheel, hold V for the wiper, press F for the bar, and hold P for the crank. From the rolling ball onward, press **F** whenever ready. U/J/K/O are no longer required. Release G/X/V/P to stop the part at its partial pose; hold again to continue. Space is a separate pause.
 
-## Sequence
+A required-key button opens the Operate page with the exact instruction. F GO physically releases the ready mechanism. Later keys cannot skip stages. During ball-to-drum stages, the bottom hint suggests view 6; the camera never moves automatically. The guide uses larger lettering and fewer rows per page, with current action and contact-failure information below.
 
-Times below are active simulation seconds; interactive mode adds the user's waiting time. All seventeen durations sum to **70 seconds**.
+![Larger current-operation guide](docs/review-2026-10-09/guide_hold_key.png)
 
-| Action | Time | Duration | Visible transfer |
-|---|---|---|---|
-| 1. Glove | 0-6 | 6 s | Pick up the starter pin, insert it into the gear socket, withdraw hand |
-| 2. Gears | 6-10 | 4 s | Wind the spring through one revolution |
-| 3. Cam and lever | 10-14 | 4 s | Cam contacts lever and retracts the ramp stop |
-| 4. Wheel | 14-18 | 4 s | Roll down the ramp and push the wiper trigger paddle |
-| 5. Wiper | 18-21 | 3 s | One sweep contacts the tipping bar |
-| 6. Clutch bar | 21-24 | 3 s | Tip onto the crank clutch pedal |
-| 7. Crank and rack | 24-29 | 5 s | One compression stroke advances rack, lowers follower and lifts ball stop |
-| 8. Rolling ball (new) | 29-34 | 5 s | Roll right to left into the trigger cup |
-| 9. Trigger cup (new) | 34-38 | 4 s | Tip the captive ball away from the chute; withdraw striker retaining finger |
-| 10. Pendulum striker (new) | 38-42 | 4 s | One arc strikes the rocker's lower paddle |
-| 11. Rocker arm (new) | 42-46 | 4 s | Pivot to press the pin's release collar |
-| 12. Sliding pin (new) | 46-50 | 4 s | Lift clear of the cable drum's stop tooth |
-| 13. Cable drum and bolt | 50-53 | 3 s | Wind in the return cable and withdraw catch bolt |
-| 14. Catch | 53-56 | 3 s | Swing clear of the supported weight |
-| 15. Counterweight and barrier | 56-60 | 4 s | Weight falls, barrier rises, foot pedal releases bridge |
-| 16. Drawbridge | 60-65 | 5 s | Lower across the exit gap and contact the starter trip |
-| 17. Starter | 65-70 | 5 s | Turn once in 3 seconds, then retract coupling over 2 seconds |
-| 18. Car exit | 70-77 | 7 s | Automatic departure in presentation; arrows drive in interactive |
+## Timing and motion
 
-The route moves left to right along the original rear row, then right to left across the ball/cup/striker/rocker row. A low, supported cable returns to the catch and car on the right. The closer overview, stepped workbench, legs and braces give both rows a readable setting. View 6 shows the new contacts closely; view 4 follows the driving area.
+All start times and durations in poseAt() derive from **STAGE_TIME** through stageProgress(). Pickup, lever contact and starter withdrawal use fractions within their stage, not a second set of literal times. Capture samples also follow that table. The rocker and pin each take two seconds; the saved time goes to the longer ball route, counterweight and bridge. The cup is three seconds. Total pre-release time remains 70 seconds.
 
-## Transformations for the new components
+| Action | Active seconds | Duration | Interactive input | Visible motion |
+|---|---|---|---|---|
+| 1. Glove | 0-6 | 6 s | Hold G | Pin pickup, transport and placement |
+| 2. Gears | 6-10 | 4 s | Tap Z four times | One spring-winding revolution |
+| 3. Cam / lever | 10-14 | 4 s | Hold X | Output cam lifts lever and retracts wheel stop |
+| 4. Rolling wheel | 14-18 | 4 s | F | Wheel rolls down ramp and reaches paddle |
+| 5. Wiper | 18-21 | 3 s | Hold V | One sweep reaches bar |
+| 6. Clutch bar | 21-24 | 3 s | F | Bar presses crank clutch pedal |
+| 7. Crank / ball stop | 24-29 | 5 s | Hold P | One compression stroke lifts the ball stop |
+| 8. Rolling ball | 29-36 | 7 s | F | Ball rolls into captive cup |
+| 9. Trigger cup | 36-39 | 3 s | F | Cup tips and clears retaining finger |
+| 10. Pendulum striker | 39-43 | 4 s | F | Striker swings into rocker pad |
+| 11. Rocker arm | 43-45 | 2 s | F | Roller reaches pin collar |
+| 12. Sliding pin | 45-47 | 2 s | F | Pin lifts clear of drum |
+| 13. Spring drum / bolt | 47-50 | 3 s | F | Spring unwinds; spool takes up cable and pulls bolt |
+| 14. Catch | 50-53 | 3 s | F | Support finger clears weight |
+| 15. Counterweight / barrier | 53-58 | 5 s | F | Weight descends; barrier clears car roof |
+| 16. Drawbridge | 58-65 | 7 s | F | Deck lowers across gap |
+| 17. Starter / release shoe | 65-70 | 5 s | F | Shaft cranks car socket, retracts, and withdraws tire shoe |
 
-All matrices use column vectors: **world = T * R * S * local**. Cube scaling gives beams, beds, cup walls and brackets; spheres provide the ball, striker and joint rollers. Rings, disks and guide wheels are generated from triangles.
+Interactive waiting/pausing adds wall-clock time. Normal presentation has no waiting holds. The car's automatic exit takes seven additional seconds.
 
-- **Ball:** translate along the inclined chute and rotate around Z by `distance / BALL_RADIUS`. Its off-center dark marker makes rotation visible. At arrival its center becomes a child of the cup, preserving its position continuously.
-- **Cup:** `T(CUP_PIVOT) * Rz(angle)` rotates the floor, walls, retaining finger and captured ball together through 32 degrees. Its pivot is on the right so the ball tips left and down, clear of the chute.
-- **Pendulum:** `T(PENDULUM_PIVOT) * Rz(angle)` swings a cube rod and sphere bob from +45 to -45 degrees at a fixed length of 1.65. It stops against the rocker and a damped rest.
-- **Rocker:** pivot the beam and lower strike paddle about Z from 0 to -25 degrees. A short cross shaft carries the left roller to the pin collar in the front plane.
-- **Sliding pin:** translate its shaft and collar upward by 0.65 along Y through two stationary guides. The freed drum rotates by cable take-up divided by its 0.42 radius, pulling the bolt along Z.
+## Contact guards and visible power transfer
 
-The rack's diagonal link keeps a fixed length using `sqrt(L*L-dx*dx)`. Its guided follower descends by the same amount that the ball stop rises, preserving cable length. The original crank also retains its fixed connecting rod length. Counterweight travel still equals barrier lift, and wheel rotation still follows signed driving distance.
+Simulation.update() consumes a long frame one boundary at a time. Before entering the next stage it checks the completed pose using the same key dimensions and transforms as Scene. The relay requires the ball seated on the cup floor, the finger clear of the striker, the striker at the rocker pad, the roller at the collar, and the pin clear of the drum. Bolt/catch, roof/bridge, starter-socket and shoe-clearance conditions protect the exit. A failed check freezes advancement, shows CONTACT CHECK with a reason, and prevents input from bypassing it. R resets the fault. Tests include deliberately short/misaligned/obstructed poses.
 
-## Rendering and simulation
+The drum has an exposed pre-wound spiral spring: its outer end stays fixed to the bracket and inner end turns the axle. Cable runs from its rotating anchor around the spool to a bottom tangent, through correctly oriented fairleads and two quarter-circle guides, then to the bolt. Spool take-up increases wrap length by the amount the output segment shortens. Ferrules reveal cable motion. This illustrates stored energy; no force simulation is claimed.
 
-Gouraud computes the lighting formula per vertex and interpolates the result. Phong interpolates normals/positions, normalizes the normal and evaluates the same formula per fragment. Flat shading uses face normals. Inverse-transpose normal transforms support nonuniform scaling. Four light rigs, a shadow map, exposure and matte/metal materials remain available.
+The car carries a matching starter socket and rotating hub. The external shaft mates with that socket during cranking. Withdrawal also moves a brass shoe out from the right-front tire. The bridge must be down before cranking, and shaft/shoe/roof clearances must pass before driving begins.
 
-T performs CPU ray/triangle intersections into the same scene, with a bounding-volume tree, shadow rays and one reflection bounce. The 800-pixel-wide result is a frozen snapshot. T, Esc or left click returns and excludes tracing time from the simulation clock. It is single-sample offline ray tracing with hard shadows.
+## Graphics and transformations
 
-This is deterministic, authored mechanism animation without a physics engine. Springs, latches and contact events explain the authored transitions; forces and collisions are not dynamically solved. The car uses kinematic steering, acceleration, drag, reverse and bounded driving surfaces.
+Cubes form beams, cups, pads, brackets and panels. Spheres form balls and joints. Disks, annuli, springs and cable guides are generated from triangles. All car parts inherit a chassis transform; wheels add steering and signed-distance/radius rotation.
 
-## Validation
+Cup, striker and rocker use T(pivot) * Rz(angle). The pin and bolt translate on guided axes. The connecting rod and rack lift-link preserve their lengths using Pythagoras. The counterweight and barrier move equally in opposite directions. The bridge uses an X-axis hinge rotation. Normals use the inverse-transpose model matrix after nonuniform scaling.
+
+**Gouraud** computes lighting at vertices and interpolates it. **Phong** interpolates normals/positions and evaluates the same lighting equation per fragment. L directly compares them with unchanged lights/materials. Large bench and floor cubes are subdivided so Gouraud can sample the nearby lamp. Normals use inverse-transpose transforms; mesh winding agrees with outward normals.
+
+The lamp uses inverse-square attenuation and a six-face radial depth map. Sunlight uses a separate directional shadow map. There is no hidden rim light. Shadow filtering corrects for the receiving triangle's plane at each sampled texel. Diffuse uses N dot L; specular uses the Phong reflection vector, only on the lit side. Lighting is computed in linear space, then exposure, tone mapping and display gamma are applied once. See [lighting and projection review](docs/LIGHTING_REVIEW.md) for equations, checks and limitations.
+
+The camera uses a 43-degree vertical perspective field of view and the current framebuffer aspect ratio. Near/far planes are 0.05/220 scene units. Rendering, lamp picking and snapshot rays share these projection settings. The orthographic matrix belongs only to the distant sun's shadow map.
+
+T traces actual scene triangles on the CPU, with shadow rays and one reflection bounce. It produces an 800-pixel-wide frozen snapshot, not real-time path tracing. Returning restores the prior play/pause state; tracing time does not advance animation.
+
+## Verification and source
 
 ```powershell
 mingw32-make test
-.\cog_demo.exe --verify-playback
+.\cog_demo.exe --verify-lighting
 .\cog_demo.exe --verify-interactive
 .\cog_demo.exe --verify-timing
-.\cog_demo.exe --capture docs/expanded-preview
-.\cog_demo.exe --capture-ray docs/expanded-ray
+.\cog_demo.exe --capture docs/review-2026-10-09
 ```
 
-Playback verification renders the complete sequence. Interactive verification exercises the actual key callbacks, quarter turns and released holds while rendering all stages. Timing verification uses actual GLFW elapsed time for the full 77-second run. See [validation results](docs/VALIDATION.md) and [demonstration notes](docs/VIVA.md).
+Test output separates 17 nominal/17 failed handoff fixtures and focused behavior checks from repeated numeric samples. A large invariant count is not visual coverage. See [validation](docs/VALIDATION.md), [handoff frame review](docs/HANDOFF_REVIEW.md), [viva notes](docs/VIVA.md), and [current proposal draft](docs/PROPOSAL.md).
 
 | File | Role |
 |---|---|
-| src/animation.h | Stage timing, deterministic poses, manual operations, free camera and driving |
-| src/scene.h | Workbench, supports, original machine, new front row and car |
-| src/main.cpp | GLFW handlers, guide, frame loop and verification/capture modes |
-| src/hud.h | Triangle text/UI rendering and shared display/hit-test scaling |
-| src/renderer.h | Primitive meshes, actual Gouraud/Phong shaders and shadow map |
-| src/raytrace.h | CPU triangle ray tracer and snapshot display |
-| src/validation.h | Timing, contacts, transforms, input, reset, car and UI checks |
+| src/animation.h | Single timeline, poses, shared contact geometry, guards, input, camera/car |
+| src/scene.h | Primitive machine, larger contacts, spring/cable route, car coupling/shoe |
+| src/main.cpp | GLFW input, honest button actions, paginated guide, render loop, captures |
+| src/hud.h | Triangle font, scalable buttons and shared hit-test layout |
+| src/renderer.h / lighting.h | Meshes, Gouraud/Phong, lights and shadow mapping |
+| src/raytrace.h | Optional CPU triangle tracer |
+| src/validation.h | Focused handoff faults, controllers, UI and sampled invariants |
 
-Source before this change is preserved in backups/before-expanded-chain-2026-10-08.zip.
+Contacts and motor energy remain authored mechanism animation, with geometric boundary guards. There is no force engine, general collision response, rope dynamics or full engine model. Car driving stays kinematic and bounded. Source before this revision is archived in the development workspace under backups/before-contact-review-2026-10-09.zip; that archive is not part of the submission.
