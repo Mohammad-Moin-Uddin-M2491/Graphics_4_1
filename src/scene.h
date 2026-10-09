@@ -13,8 +13,19 @@ const Material red{{.26f,.15f,.09f},48,.45f};
 const Material glass{{.018f,.041f,.055f},96,.055f};
 struct Scene {
     std::vector<Draw> items;
+    int activeStage=-1;
+    int lampFirst=-1,lampEnd=-1;
+    bool isLamp(int item)const{return item>=lampFirst&&item<lampEnd;}
+    Material contact(Material m,int stage)const{
+        if(activeStage==stage||activeStage==stage+1)m.color=m.color*.55f+Vec3{.90f,.68f,.30f}*.45f;
+        return m;
+    }
     void shape(int mesh,Mat4 model,Material material) {items.push_back({mesh,model,material});}
-    void box(Vec3 p,Vec3 size,Material m,const Mat4& parent=Mat4::identity()) {shape(0,parent*translate(p)*scale(size),m);}
+    void box(Vec3 p,Vec3 size,Material m,const Mat4& parent=Mat4::identity()) {
+        float extent=std::max({size.x,size.y,size.z});
+        // Extra vertices sample local point lighting on large surfaces in Gouraud.
+        shape(extent>50?7:extent>5?6:0,parent*translate(p)*scale(size),m);
+    }
     void disk(Vec3 p,float radius,float depth,Material m,const Mat4& parent=Mat4::identity()) {shape(1,parent*translate(p)*scale({radius,radius,depth}),m);}
     void ball(Vec3 p,float r,Material m,const Mat4& parent=Mat4::identity()) {shape(2,parent*translate(p)*scale({r,r,r}),m);}
     void ring(Vec3 p,float r,float depth,Material m,const Mat4& parent=Mat4::identity()) {shape(4,parent*translate(p)*scale({r,r,depth}),m);}
@@ -59,6 +70,12 @@ struct Scene {
     void car(const Pose& p) {
         // All wheels, windows and body pieces inherit the chassis transform.
         Mat4 root=translate(p.carPosition)*rotateY(p.carYaw);
+        // Visible starter socket is a child of the car, exactly aligned with
+        // the external shaft. Its hub turns with the starter before departure.
+        ring({.85f,.8f,-.82f},.23f,.20f,contact(brass,Starter),root);
+        Mat4 socket=root*translate({.85f,.8f,-.94f})*rotateZ(-p.starter);
+        disk({0,0,0},.10f,.12f,dark,socket);
+        box({0,0,-.07f},{.16f,.045f,.03f},cream,socket);
         box({0,.72f,0},{3.35f,.36f,1.45f},teal,root);
         box({0,.37f,0},{2.85f,.17f,1.35f},dark,root);
         shape(3,root*translate({-.28f,1.1f,0})*scale({1.08f,.78f,1.27f}),glass);
@@ -138,8 +155,8 @@ struct Scene {
         box({-.905f,.27f,0},{.05f,.44f,.70f},teal,cup);
         box({-.50f,.23f,-.34f},{.86f,.35f,.055f},teal,cup);
         box({-.50f,.145f,.34f},{.86f,.09f,.055f},steel,cup);
-        beam(transform(cup,{0,0,-.28f}),transform(cup,{-.84f,.42f,-.28f}),.10f,brass);
-        box({-.84f,.42f,0},{.12f,.12f,.68f},brass,cup);
+        beam(transform(cup,{0,0,-.28f}),transform(cup,CUP_FINGER+Vec3{0,0,-.28f}),.13f,brass);
+        box(CUP_FINGER,CUP_FINGER_SIZE,contact(brass,Cup),cup);
         disk({0,0,.41f},.14f,.15f,steel,cup);
         mount({CUP_PIVOT.x,.08f,2.65f},{.65f,.16f,.55f});
         beam({CUP_PIVOT.x,.15f,2.65f},CUP_PIVOT+Vec3{0,0,-.45f},.15f,dark);
@@ -152,17 +169,17 @@ struct Scene {
         beam({PENDULUM_PIVOT.x,2.90f,2.62f},PENDULUM_PIVOT,.14f,steel);
         Mat4 pendulum=translate(PENDULUM_PIVOT)*rotateZ(p.pendulum);
         box({0,-PENDULUM_LENGTH*.5f,0},{.12f,PENDULUM_LENGTH,.14f},steel,pendulum);
-        ball({0,-PENDULUM_LENGTH,0},.27f,brass,pendulum);
+        ball({0,-PENDULUM_LENGTH,0},STRIKER_RADIUS,contact(brass,Pendulum),pendulum);
         disk({0,0,.14f},.18f,.16f,brass,pendulum);
         // A damped end stop holds the striker after contact; no idle oscillation.
         box({PENDULUM_PIVOT.x-1.17f,1.15f,3.15f},{.30f,.12f,.56f},rubber);
 
         Mat4 rocker=translate(ROCKER_PIVOT)*rotateZ(p.rocker);
         box({-.03f,0,0},{2.30f,.16f,.24f},teal,rocker);
-        box({1.03f,-.44f,0},{.16f,.88f,.48f},brass,rocker);
+        box(ROCKER_PAD,ROCKER_PAD_SIZE,contact(brass,Pendulum),rocker);
         disk({0,0,.20f},.18f,.22f,steel,rocker);
         beam(transform(rocker,{-1.12f,0,0}),rockerTip(p.rocker),.11f,steel);
-        ball(rockerTip(p.rocker),.09f,brass);
+        ball(rockerTip(p.rocker),ROCKER_ROLLER_RADIUS,contact(brass,Rocker));
         mount({ROCKER_PIVOT.x,.09f,2.71f},{.8f,.18f,.75f});
         beam({ROCKER_PIVOT.x,.18f,2.71f},ROCKER_PIVOT+Vec3{0,0,-.3f},.16f,dark);
         disk(ROCKER_PIVOT+Vec3{0,0,-.08f},.085f,.6f,steel);
@@ -170,36 +187,81 @@ struct Scene {
         // Rocker raises the collar to unlatch a vertically sliding pin. Its
         // withdrawal frees the spring drum; the drum then pulls the old bolt.
         Vec3 pin=RELEASE_PIN+Vec3{0,p.releasePin,0};
-        box(pin,{.12f,1.18f,.13f},brass);
-        box(pin+Vec3{0,.60f,0},{.48f,.10f,.34f},steel);
+        box(pin,{.14f,PIN_LENGTH,.15f},brass);
+        box(pin+Vec3{0,COLLAR_Y,0},COLLAR_SIZE,contact(steel,Rocker));
         for(float y:{1.66f,2.04f}){
             box({RELEASE_PIN.x,y,3.55f},{.42f,.18f,.18f},dark);
             shape(1,translate({RELEASE_PIN.x,y,3.70f})*rotateX(PI/2)*scale({.16f,.16f,.15f}),steel);
         }
         mount({RELEASE_PIN.x,.08f,3.35f},{.75f,.16f,.8f});
         beam({RELEASE_PIN.x,.16f,3.35f},{RELEASE_PIN.x,2.14f,3.35f},.13f,dark);
-        Mat4 drum=translate({RELEASE_PIN.x,1.0f,3.70f})*rotateZ(p.releaseDrum);
-        ring({0,0,0},.42f,.19f,teal,drum);
+        Mat4 drum=translate(DRUM_CENTER)*rotateZ(p.releaseDrum);
+        ring({0,0,0},DRUM_RADIUS,.19f,teal,drum);
         for(int i=0;i<4;++i)box({.2f,0,0},{.42f,.07f,.20f},brass,drum*rotateZ(i*PI/2));
         disk({0,0,.14f},.12f,.14f,steel,drum);
         box({0,.31f,0},{.16f,.20f,.22f},brass,drum);
-        // Return cable is below the chute, with a front guide and rear fairlead.
-        beam({RELEASE_PIN.x,.58f,3.70f},{6.93f,.58f,3.70f},.04f,cable);
-        for(float x:{-7.f,-3.f,1.f,5.f,6.93f}){
+        // An exposed pre-wound clock spring drives the spool once the pin lifts.
+        // Outer spring end is fixed to the housing, inner end follows the axle.
+        ring(DRUM_CENTER+Vec3{0,0,.24f},.47f,.06f,dark);
+        for(int i=0;i<100;++i){
+            auto spring=[&](float u){float a=6*PI*u+p.releaseDrum*(1-u),r=.09f+.23f*u;
+                return DRUM_CENTER+Vec3{r*std::cos(a),r*std::sin(a),.29f};};
+            beam(spring(i/100.f),spring((i+1)/100.f),.025f,contact(brass,Drum));
+        }
+        disk(DRUM_CENTER+Vec3{0,0,.22f},.085f,.28f,steel);
+        beam(DRUM_CENTER+Vec3{.32f,0,.29f},DRUM_CENTER+Vec3{.53f,0,.29f},.07f,steel);
+        beam(DRUM_CENTER+Vec3{.53f,0,.29f},DRUM_CENTER+Vec3{.53f,-.8f,.29f},.08f,dark);
+        // Continuous cable: rotating anchor -> spool wrap -> bottom tangent ->
+        // XY quarter guide -> vertical -> YZ quarter guide -> moving bolt end.
+        float anchor=PI/2+p.releaseDrum;
+        for(int i=0;i<40;++i){float a=lerp(anchor,1.5f*PI,i/40.f),b=lerp(anchor,1.5f*PI,(i+1)/40.f);
+            beam(DRUM_CENTER+Vec3{DRUM_RADIUS*std::cos(a),DRUM_RADIUS*std::sin(a),0},
+                 DRUM_CENTER+Vec3{DRUM_RADIUS*std::cos(b),DRUM_RADIUS*std::sin(b),0},.04f,cable);}
+        ball(DRUM_CENTER+Vec3{DRUM_RADIUS*std::cos(anchor),DRUM_RADIUS*std::sin(anchor),0},.065f,steel);
+        Vec3 first=DRUM_CENTER+Vec3{0,-DRUM_RADIUS,0},corner=CABLE_BEND_XY+Vec3{0,-CABLE_GUIDE_RADIUS,0};
+        beam(first,corner,.04f,cable);
+        for(float x:{-7.f,-3.f,1.f,5.f}){
             box({x,.32f,3.91f},{.09f,.64f,.1f},dark);
-            ring({x,.58f,3.78f},.085f,.1f,steel);
+            shape(4,translate({x,.58f,3.70f})*rotateY(PI/2)*scale({.085f,.085f,.10f}),steel);
         }
-        beam({6.93f,.58f,3.70f},{6.93f,1.75f,3.70f},.04f,cable);
-        beam({6.93f,1.75f,3.70f},{6.93f,1.75f,.55f+p.bolt},.04f,cable);
-        for(float y:{.58f,1.75f}){
-            shape(4,translate({6.93f,y,3.70f})*rotateY(PI/2)*scale({.13f,.13f,.1f}),steel);
-            beam({6.93f,y,3.70f},{7.17f,y,3.70f},.07f,steel);
+        ring(CABLE_BEND_XY,CABLE_GUIDE_RADIUS,.10f,steel);
+        shape(4,translate(CABLE_BEND_YZ)*rotateY(PI/2)*scale({CABLE_GUIDE_RADIUS,CABLE_GUIDE_RADIUS,.10f}),steel);
+        for(int i=0;i<16;++i){float a=PI*.5f*i/16,b=PI*.5f*(i+1)/16,r=CABLE_GUIDE_RADIUS;
+            beam(CABLE_BEND_XY+Vec3{r*std::sin(a),-r*std::cos(a),0},CABLE_BEND_XY+Vec3{r*std::sin(b),-r*std::cos(b),0},.04f,cable);
+            beam(CABLE_BEND_YZ+Vec3{0,r*std::sin(a),r*std::cos(a)},CABLE_BEND_YZ+Vec3{0,r*std::sin(b),r*std::cos(b)},.04f,cable);
         }
+        beam(CABLE_BEND_XY+Vec3{CABLE_GUIDE_RADIUS,0,0},CABLE_BEND_YZ+Vec3{0,0,CABLE_GUIDE_RADIUS},.04f,cable);
+        beam(CABLE_BEND_YZ+Vec3{0,CABLE_GUIDE_RADIUS,0},boltCablePoint(p.bolt),.04f,cable);
+        for(Vec3 center:{CABLE_BEND_XY,CABLE_BEND_YZ}){disk(center,.055f,.16f,brass);beam(center,{7.17f,center.y,3.70f},.07f,steel);}
+        // Ferrules make the transmitted cable travel visible in the overview.
+        ball({-4-p.bolt,.58f,3.70f},.065f,cream);ball({6.93f,1.75f,2.1f+p.bolt},.065f,cream);
         mount({7.17f,.08f,3.70f},{.40f,.16f,.55f});
         beam({7.17f,.16f,3.70f},{7.17f,1.95f,3.70f},.10f,dark);
     }
-    void build(const Pose& p,float /*time*/) {
-        items.clear();
+    void benchLamp(int lighting){
+        // A clamped workshop inspection lamp: cubes, beams and a spherical bulb.
+        // Front edge placement illuminates the faces seen in the presentation
+        // without an artificial fill source behind the camera.
+        const Vec3 foot{-.4f,.09f,4.05f},joint{-.4f,6.4f,4.05f};
+        mount(foot,{.72f,.18f,.7f});
+        beam(foot+Vec3{0,.09f,0},joint,.12f,steel);
+        ball(joint,.18f,brass);
+        beam(joint,LAMP_BULB+Vec3{0,.60f,0},.13f,steel);
+        beam(joint-Vec3{0,.65f,0},LAMP_BULB+Vec3{.45f,.60f,0},.065f,steel);
+        lampFirst=int(items.size());
+        box(LAMP_BULB+Vec3{0,.49f,0},{.26f,.25f,.26f},brass);
+        box(LAMP_BULB+Vec3{0,.36f,0},{.96f,.14f,.85f},teal);
+        Vec3 tint=lightingPreset(lighting).lampColor;
+        tint=tint*(1/std::max({tint.x,tint.y,tint.z}));
+        ball(LAMP_BULB,LAMP_RADIUS,{tint,24,.12f,0,2.6f});
+        // Open guard leaves the bulb visible and the downward light unobstructed.
+        for(float x:{-.42f,.42f})for(float z:{-.36f,.36f})
+            beam(LAMP_BULB+Vec3{x,.30f,z},LAMP_BULB+Vec3{x,-.40f,z},.035f,steel);
+        for(float z:{-.36f,.36f})box(LAMP_BULB+Vec3{0,-.40f,z},{.88f,.045f,.04f},steel);
+        lampEnd=int(items.size());
+    }
+    void build(const Pose& p,float time,int lighting=0) {
+        items.clear();activeStage=stageAt(time);
         box({0,-2.7f,0},{200,.25f,200},{{.018f,.025f,.032f},20,.025f});
         const Material benchTop{{.10f,.13f,.145f},26,.12f},edge{{.17f,.115f,.07f},24,.10f};
         // Stepped workbench leaves the bridge gap open beside the new front row.
@@ -388,13 +450,19 @@ struct Scene {
         // completely before the car is released at 70 active seconds.
         mount({10.85f,.12f,1.25f},{.7f,.24f,.8f});
         shape(1,translate({10.8f,.83f,1.25f})*rotateY(PI/2)*scale({.32f,.32f,.65f}),dark);
-        Mat4 starter=translate({10.13f+p.coupling,.83f,1.25f})*rotateY(PI/2)*rotateZ(p.starter);
+        Mat4 starter=translate(starterTip(p)+Vec3{.45f,0,0})*rotateY(PI/2)*rotateZ(p.starter);
         disk({0,0,0},.09f,.9f,steel,starter);ring({0,0,.27f},.27f,.12f,brass,starter);
         for(int i=0;i<4;++i)box({.12f,0,.27f},{.24f,.045f,.13f},steel,starter*rotateZ(i*PI/2));
+        // Coupling withdrawal pulls a wheel shoe sideways out of the car path.
+        // The shoe initially touches the right front tire; both must clear.
+        box(starterShoe(p),{.28f,.40f,.15f},contact(brass,Starter));
+        beam(starterTip(p)+Vec3{.55f,0,0},starterShoe(p)+Vec3{0,.2f,0},.075f,steel);
+        beam({9.77f,.08f,1.92f},{10.5f,.08f,1.92f},.09f,dark);
         Vec3 bridgeTrip=transform(bridge,{1.43f,0,1.9f});
         beam(bridgeTrip,{10.85f,.25f,3},.04f,brass);beam({10.85f,.25f,3},{10.85f,.7f,1.25f},.04f,brass);
         // The car travels toward the viewer along +Z, on the same bench level.
         car(p);
+        benchLamp(lighting);
     }
 };
 }
