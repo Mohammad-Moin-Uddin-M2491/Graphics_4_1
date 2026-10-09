@@ -1,0 +1,36 @@
+SUBMISSION RUNTIME CHECK - 9 OCTOBER 2026
+
+The packaged executable was tested from this folder with PATH restricted to
+Windows/System32 and Windows. C:/mingw64/bin was not on the search path.
+
+CPU: --self-test passed.
+17 nominal + 17 failed handoff fixtures; 293 focused assertions.
+9,241 sampled frames / 189,137 repeated numeric invariants, counted separately.
+
+GPU: --verify-playback passed on Intel Iris Xe, OpenGL 3.3.
+Full 17-action chain plus car exit rendered in 385 synthetic-time frames.
+Car release was 70.0000 active seconds. No OpenGL errors were reported.
+This is a fast playback check, not the real-time measurement.
+
+The separate actual-time run measured 70.0078 seconds to release and rendered
+11,153 frames through 77 seconds. See docs/VALIDATION.md.
+
+The executable in this folder has the same SHA-256 hash as the tested
+workspace executable. Source and build inputs were copied without modification.
+This checks local independence from the compiler PATH; it is not a test on a
+different computer or on the instructor's projector.
+
+2026-10-09: smooth striker release and clickable bench lamp update.
+Build and self-test passed: 300 focused assertions, 189430 sampled invariants.
+Presentation and interactive GPU playback passed; car releases at 70 active seconds.
+Lamp click dispatch checked at 1440x900, 960x600 and 1920x800; UI and occlusion guards passed.
+Four lighting modes, lighting guide and ray snapshot rendered and visually inspected.
+Updated source/executable copies verified against project SHA256 hashes.
+
+2026-10-09: lighting, normals and projection correction.
+Build passed without warnings. 472 focused checks; 189430 sampled invariants.
+GPU checks: 54188 triangle orientations; six radial shadow faces; lamp occlusion in all shading modes.
+Projection checked for six camera presets, three aspects, nine image locations, and near/far clipping.
+Presentation and interactive playback passed. Final front-edge lamp click and playback recheck passed; car release remains 70 seconds.
+Four light presets, Phong/Gouraud/Flat, and CPU snapshot reviewed. Source, executable and review notes updated.
+See docs/LIGHTING_REVIEW.md for equations, evidence and the renderer limitations.

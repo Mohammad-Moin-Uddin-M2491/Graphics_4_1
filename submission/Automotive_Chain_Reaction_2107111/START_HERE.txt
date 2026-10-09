@@ -1,0 +1,13 @@
+AUTOMOTIVE CHAIN REACTION - 2107111
+
+Extract the entire submission folder before running.
+Double-click START_PROJECT.bat or cog_demo.exe. Keep all DLLs beside it.
+The presentation starts automatically. The car releases after 70 active seconds.
+I switches to interactive mode. Follow the displayed key; C opens the larger guide.
+Camera: WASD/QE and right mouse. Car: arrows after release. R resets.
+
+No compiler is needed to run this build. Rebuilding with run.bat requires MinGW.
+The system needs Windows and an OpenGL 3.3-capable graphics driver.
+README.md contains full controls; docs/VIVA.md contains demonstration notes.
+docs/HANDOFF_REVIEW.md links the current review frames.
+SUBMISSION_CHECK.txt records the isolated runtime check.

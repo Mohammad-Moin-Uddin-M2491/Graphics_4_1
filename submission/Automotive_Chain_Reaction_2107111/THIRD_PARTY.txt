@@ -1,0 +1,10 @@
+Bundled project dependencies
+
+GLFW: existing project header, link libraries and glfw3.dll.
+GLAD: existing generated source and headers.
+MinGW GCC runtime: libgcc_s_seh-1.dll and libstdc++-6.dll.
+MinGW threading runtime: libwinpthread-1.dll (required by the two GCC DLLs).
+
+Runtime DLLs were copied from the same C:/mingw64/bin toolchain that built
+cog_demo.exe. Existing copyright notices in supplied headers/source are retained.
+Windows system DLLs are supplied by Windows and are not copied into this folder.
