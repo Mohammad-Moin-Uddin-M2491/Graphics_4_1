@@ -1,4 +1,4 @@
-ï»¿# Viva guide
+# Viva guide
 
 **Mohammad Moin Uddin Moin, 2107111**
 
@@ -6,11 +6,11 @@
 
 1. Run cog_demo.exe. Presentation mode begins automatically. Explain that the chained actions take 70 active seconds before the car can move.
 2. Hold right mouse and use WASD/QE to approach an object. Release the mouse to click UI. Press 1 to recover the overview.
-3. Press 3 and Space. Press L to compare Gouraud and Phong without changing the camera, material, light or pose. Click Light to demonstrate another light direction/color. Resume with Space.
-4. Press 2 to explain the single crank compression, rigid connecting rod, rack and ball-stop cable. Press 5 for the full new row, then 6 to show the cup, striker, rocker and pin contacts. The low cable returns to the catch on the right.
-5. Press 4 as the bridge lowers. At 70 seconds the starter disconnects and the car unlocks. Use Up/Down and Left/Right; camera movement works independently. Drive straight across the bridge before turning on the apron.
-6. Press I to reset into interactive mode. Hold G for the glove, tap Z four times for four quarter turns, hold X for the cam, press F for the wheel, hold V for the wiper, press F for the bar and hold P for the crank. Release a held key midway to demonstrate a partial pose. F then rolls the ball; U tips the cup, J releases the striker, K rocks the arm, O lifts the pin, and F releases each remaining ready mechanism. Future keys cannot skip stages.
-7. Click Guide or press C. Show its two tabs, current mechanism, next available action and Close button. The manual controls are explicitly marked interactive only.
+3. Press 3 and Space. Press L to compare Gouraud and Phong without changing the camera, material, light or pose. Press 1 and click the inspection lamp's bulb or housing to cycle Studio, Daylight, Sunset and Night (B also works). Studio/Night have one direct source: the visible bulb. Daylight/Sunset also include a distant sun. Both sources cast their own shadows. Resume with Space.
+4. Press 2 to explain the single crank compression, rigid connecting rod, rack and ball-stop cable. Press 5 for the full new row, then 6 to show the cup, striker, rocker and pin contacts. The exposed spring drives the drum. Follow its wrapped cable through fairleads and quarter-circle guides to the catch bolt.
+5. Press 4 as the bridge lowers. Show the matching starter socket on the car and the brass shoe touching its right-front tire. At 70 seconds the shaft disconnects, the shoe clears, and the car unlocks. Use Up/Down and Left/Right; camera movement works independently. Drive straight across the bridge before turning on the apron.
+6. Press I to reset into interactive mode. Hold G for the glove, tap Z four times for four quarter turns, hold X for the cam, press F for the wheel, hold V for the wiper, press F for the bar and hold P for the crank. Release a held key midway to demonstrate a partial pose. F then rolls the ball; F then tips the cup, releases the striker, rocks the arm, lifts the pin and releases each remaining ready mechanism. Future keys cannot skip stages.
+7. Click Guide or press C. Show the six pages, larger text, required-key guide button, current mechanism and Close button. The manual controls are explicitly marked interactive only.
 8. Press T for the optional ray-traced still. It uses actual triangle intersections, shadow rays and one reflection bounce. Press T, Esc or left click to return without advancing the simulation during tracing.
 9. Press R to demonstrate deterministic reset. Space starts another presentation, or the displayed individual key operates the first interactive action.
 
@@ -18,7 +18,11 @@
 
 **Gouraud versus Phong:** Both use the same lighting equation in this project. Gouraud computes lighting at the triangle vertices and interpolates their colors. Phong interpolates normals and positions and computes lighting for each fragment. This makes small specular highlights more accurate. The lighting model uses the reflected light vector, not the Blinn halfway-vector approximation.
 
-**Ambient, diffuse, specular:** Ambient is a simple sky/ground approximation for background light. Diffuse uses max(dot(normal, lightDirection), 0). Specular uses pow(max(dot(viewDirection, reflectedLight), 0), shininess). A point fill light gets weaker with distance. These are a practical teaching model, not a full physically based renderer.
+**Ambient, diffuse, specular:** Ambient is a simple sky/ground approximation for indirect light. Diffuse uses max(dot(normal, lightDirection), 0). Specular uses ks * pow(max(dot(viewDirection, reflectedLight), 0), shininess), with no specular on a surface facing away from the source. The lamp intensity falls as 1/distance squared; the calculation is capped inside the bulb radius to avoid a singularity. This is a Phong teaching model, not a full physically based renderer.
+
+**Shadows:** A point source needs six 90-degree perspective views, stored in a depth cubemap centered on the bulb. Each texel stores distance to the first blocker. A fragment farther away along that ray is shadowed. The distant sun uses an orthographic depth map because its rays are parallel. Ambient light is not multiplied by the direct-light shadow. Both Gouraud and Phong use the same shadow visibility.
+
+**Projection:** The visible camera is perspective: 43-degree vertical field of view, current framebuffer width/height, and 0.05/220 near/far planes. Resizing changes aspect, not the vertical field of view. The ray tracer and mouse picker generate rays from the same settings. Orthographic projection is used only for the sun shadow map. See LIGHTING_REVIEW.md for the numerical checks.
 
 **Transformation order:** Matrices multiply column vectors: world = T * R * S * local. Scale first, rotate about the local origin, then translate into the scene. A hinge at a mesh-local origin uses T(hinge) * R(angle). If the pivot is elsewhere, use T(pivot) * R * T(-pivot). Car wheels inherit the chassis transform and then add their own steering and rolling rotations.
 
@@ -38,9 +42,9 @@ The square root comes from Pythagoras and preserves the connecting rod length. A
 
 **Cable:** Counterweight drop and gate lift are equal. One cable segment gets longer by d while the other gets shorter by d. Pulley rotation is d/radius. The fixed cable guide arcs preserve their lengths.
 
-**Animation state:** STAGE_TIME stores 18 boundaries for 17 actions totaling 70 seconds. GLFW supplies actual elapsed time. Each pose is a deterministic function of clamped stage progress. In interactive mode, held controls advance only while their specific key is held; releasing preserves a partial pose. Z budgets one quarter turn per press and ignores OS repeat. Passive actions run after release. Every stage clamps at its boundary and requires fresh input for the next mechanism. Reset also clears held input and queued gear turns.
+**Animation state:** STAGE_TIME stores 18 boundaries for 17 actions totaling 70 seconds. GLFW supplies actual elapsed time. Every start/duration in poseAt() derives from STAGE_TIME; subactions use fractions within a stage. Each pose is a deterministic function of clamped stage progress. In interactive mode, held controls advance only while their specific key is held; releasing preserves a partial pose. Z budgets one quarter turn per press and ignores OS repeat. Passive actions run after release. Every stage clamps at its boundary and requires fresh input for the next mechanism. Reset also clears held input and queued gear turns.
 
-**Cause and effect:** Contacts and springs are authored, deterministic animation cues rather than rigid-body forces. The design demonstrates transformations and state dependencies. The code does not solve gear-tooth forces, cable tension, hydraulics or real engine mechanics.
+**Cause and effect:** Motions and stored spring energy are authored. At each boundary, position/clearance guards validate the completed pose before advancing. A ball short of the cup, an obstructing finger or a pin still blocking the drum prevents the next action. These guards are not a rigid-body force simulation. The design demonstrates transformations and state dependencies. The code does not solve gear-tooth forces, cable tension, hydraulics or real engine mechanics.
 
 **Glove attachment:** One known pin starts on a tray. During transport its world position equals hand position plus a fixed local offset. At placement, it detaches and stays at the socket. Finger cubes rotate toward it; sphere joints join the arm. This is a designated-component pickup, not arbitrary object selection or inverse kinematics.
 
