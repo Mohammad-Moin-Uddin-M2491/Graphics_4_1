@@ -44,6 +44,14 @@ inline Mat4 ortho(float l,float r,float b,float t,float n,float f) {
     auto a=Mat4::identity();a.m[0]=2/(r-l);a.m[5]=2/(t-b);a.m[10]=-2/(f-n);
     a.m[12]=-(r+l)/(r-l);a.m[13]=-(t+b)/(t-b);a.m[14]=-(f+n)/(f-n);return a;
 }
+inline constexpr float CAMERA_FOV=43, CAMERA_NEAR=.05f, CAMERA_FAR=220;
+inline Mat4 cameraProjection(float aspect){return perspective(radians(CAMERA_FOV),aspect,CAMERA_NEAR,CAMERA_FAR);}
+// Normalized screen coordinates: (-1,-1) bottom left, (+1,+1) top right.
+inline Vec3 cameraRay(Vec3 forward,float x,float y,float aspect){
+    Vec3 right=normalize(cross(forward,{0,1,0})),up=cross(right,forward);
+    float spread=std::tan(radians(CAMERA_FOV)*.5f);
+    return normalize(forward+right*(x*aspect*spread)+up*(y*spread));
+}
 inline Mat4 lookAt(Vec3 eye,Vec3 target,Vec3 up) {
     Vec3 f=normalize(target-eye),s=normalize(cross(f,up)),u=cross(s,f);
     auto a=Mat4::identity();

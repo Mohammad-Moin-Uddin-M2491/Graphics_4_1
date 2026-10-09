@@ -9,7 +9,7 @@ namespace cg {
 // as OpenGL. A binary bounding-volume tree only accelerates triangle testing.
 // One primary ray/pixel + light visibility rays + at most one reflection bounce.
 class RaySnapshot {
-    struct Ray {Vec3 origin,direction;};
+    struct Ray {Vec3 origin,direction;float nearDistance=.0003f,farDistance=1e30f;};
     struct Triangle {Vec3 a,b,c,na,nb,nc;int material;};
     struct Bounds {
         Vec3 lo{1e30f,1e30f,1e30f},hi{-1e30f,-1e30f,-1e30f};
@@ -47,19 +47,23 @@ class RaySnapshot {
             near=std::max(near,a);far=std::min(far,c);if(far<near)return false;
         }return true;
     }
-    bool intersect(const Ray& ray,Hit& hit,bool any=false)const{
+    bool intersect(const Ray& ray,Hit& hit,bool any=false,bool ignoreEmitter=false)const{
         if(nodes.empty())return false;
+        hit.distance=std::min(hit.distance,ray.farDistance);
         int stack[128],size=1;stack[0]=0;bool found=false;
         while(size){const Node& node=nodes[stack[--size]];if(!boxHit(node.bounds,ray,hit.distance))continue;
             if(node.left>=0){stack[size++]=node.left;stack[size++]=node.right;continue;}
             for(int i=node.begin;i<node.end;++i){int index=order[i];const auto& t=triangles[index];
+                // The visible bulb surrounds the point source; its luminous
+                // envelope must not block visibility rays to that source.
+                if(ignoreEmitter&&materials[t.material].emission>0)continue;
                 // Moller-Trumbore barycentric ray/triangle intersection.
                 Vec3 e1=t.b-t.a,e2=t.c-t.a,p=cross(ray.direction,e2);float determinant=dot(e1,p);
                 if(std::abs(determinant)<1e-8f)continue;
                 float inverse=1/determinant;Vec3 s=ray.origin-t.a;float u=dot(s,p)*inverse;
                 if(u<0||u>1)continue;
                 Vec3 q=cross(s,e1);float v=dot(ray.direction,q)*inverse;if(v<0||u+v>1)continue;
-                float distance=dot(e2,q)*inverse;if(distance<=.0003f||distance>=hit.distance)continue;
+                float distance=dot(e2,q)*inverse;if(distance<=ray.nearDistance||distance>=hit.distance)continue;
                 hit={distance,u,v,index};found=true;if(any)return true;
             }
         }return found;
@@ -73,32 +77,37 @@ class RaySnapshot {
         Vec3 view=ray.direction*-1;
         Vec3 ambient=lighting.ground+(lighting.sky-lighting.ground)*(n.y*.5f+.5f);
         Vec3 color=product(m.color,ambient)*(1-.55f*m.metallic);
-        auto light=[&](Vec3 l,Vec3 energy,float maxDistance){
+        auto light=[&](Vec3 l,Vec3 energy,float maxDistance,bool lamp=false){
             float ndl=std::max(0.f,dot(n,l));if(ndl==0)return Vec3{};
             Hit shadow;shadow.distance=maxDistance;
-            if(castShadows&&intersect({p+n*.002f,l},shadow,true))return Vec3{};
+            if(castShadows&&intersect({p+n*.002f,l},shadow,true,lamp))return Vec3{};
             Vec3 reflection=n*(2*dot(n,l))-l,tint=Vec3{1,1,1}*(1-m.metallic)+m.color*m.metallic;
-            float highlight=std::pow(std::max(0.f,dot(view,reflection)),m.shine)*m.specular*(1+m.shine*.045f);
-            return product(m.color*((1-.65f*m.metallic)*ndl)+tint*(highlight*ndl),energy);
+            float highlight=std::pow(std::max(0.f,dot(view,reflection)),m.shine)*m.specular;
+            return product(m.color*((1-.65f*m.metallic)*ndl)+tint*highlight,energy);
         };
         color=color+light(normalize(lighting.direction),lighting.keyColor,1e25f);
-        Vec3 fill=lighting.fillPosition-p;float distance=length(fill);
-        color=color+light(normalize(fill),lighting.fillColor*(1/(1+.06f*distance+.025f*distance*distance)),distance-.003f);
-        color=color+light(normalize({.25f,.5f,-1}),lighting.rimColor,1e25f);
+        Vec3 lamp=lighting.lampPosition-p;float distance=length(lamp);
+        color=color+light(normalize(lamp),lighting.lampColor*lampAttenuation(distance),distance-.003f,true);
         float reflectivity=.08f*m.specular+.32f*m.metallic;
         if(depth==0&&reflectivity>.015f){Vec3 reflected=ray.direction-n*(2*dot(ray.direction,n));
             color=color*(1-reflectivity)+shade({p+n*.002f,normalize(reflected)},1)*reflectivity;}
-        return color;
+        return color+m.color*m.emission;
     }
 public:
     int width=800,height=500;double milliseconds=0;size_t triangleCount=0;
     // A tiny isolated test also runs in --self-test without a graphics context.
     static bool selfTest(){RaySnapshot r;
+        r.materials.push_back({{1,1,1}});
         r.triangles.push_back({{-1,-1,0},{1,-1,0},{0,1,0},{0,0,1},{0,0,1},{0,0,1},0});
         r.order={0};r.buildNode(0,1);Hit h;
         if(!r.intersect({{0,0,2},{0,0,-1}},h)||std::abs(h.distance-2)>.0001f)return false;
         Hit miss;if(r.intersect({{2,2,2},{0,0,-1}},miss))return false;
         Hit shortRay;shortRay.distance=1;if(r.intersect({{0,0,2},{0,0,-1}},shortRay,true))return false;
+        Hit clipped;if(r.intersect({{0,0,2},{0,0,-1},2.1f,10},clipped))return false;
+        r.materials[0].emission=2;Hit luminous,opaque;
+        if(r.intersect({{0,0,2},{0,0,-1}},luminous,true,true)||!r.intersect({{0,0,2},{0,0,-1}},opaque,true,false))return false;
+        Mat4 oblique=rotateY(.4f)*scale({2,3,.5f});Vec3 normal=normalTransform(oblique,normalize({1,1,1}));
+        if(std::abs(dot(normal,transform(oblique,{1,-1,0})))>1e-5f||std::abs(dot(normal,transform(oblique,{1,0,-1})))>1e-5f)return false;
         Vec3 n=normalTransform(rotateY(.4f)*scale({2,3,.5f}),{0,0,1});
         return std::abs(length(n)-1)<.0001f&&std::abs(n.x-std::sin(.4f))<.0001f;
     }
@@ -114,10 +123,10 @@ public:
         }
         triangleCount=triangles.size();order.resize(triangleCount);std::iota(order.begin(),order.end(),0);buildNode(0,int(order.size()));
         height=std::max(1,int(std::round(width/aspect)));std::vector<unsigned char> pixels(width*height*3);
-        Vec3 right=normalize(cross(forward,{0,1,0})),up=cross(right,forward);float spread=std::tan(radians(43)*.5f);
         for(int y=0;y<height;++y)for(int x=0;x<width;++x){
-            Vec3 direction=normalize(forward+right*((2*(x+.5f)/width-1)*aspect*spread)+up*((2*(y+.5f)/height-1)*spread));
-            Vec3 color=shade({eye,direction},0);int offset=(y*width+x)*3;
+            Vec3 direction=cameraRay(forward,2*(x+.5f)/width-1,2*(y+.5f)/height-1,aspect);
+            float cosine=dot(direction,forward);
+            Vec3 color=shade({eye,direction,CAMERA_NEAR/cosine,CAMERA_FAR/cosine},0);int offset=(y*width+x)*3;
             for(int c=0;c<3;++c){float value=std::max(0.f,component(color,c)*exposure);
                 pixels[offset+c]=static_cast<unsigned char>(255*std::pow(value/(1+value),1/2.2f));}
         }
