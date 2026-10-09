@@ -1,41 +1,41 @@
-# Expanded machine validation
+# Validation of the contact and presentation revision
 
-Date: 8 October 2026 (Asia/Dhaka)
+Date: 9 October 2026 (Asia/Dhaka)
 
-## Build and controller checks
+**Later lighting correction:** see [LIGHTING_REVIEW.md](LIGHTING_REVIEW.md) for current lighting/projection tests and render evidence. The contact-revision counts below describe the earlier checkpoint.
 
-`mingw32-make build` and `mingw32-make test` passed with C++17, -O2, -Wall and -Wextra; no compiler warnings.
+## Build and focused checks
 
-**189,551 invariant checks passed.** They cover all 17 stage boundaries, exact 70-second release threshold, frame partition independence, glove attachment, gear ratio, one winding turn, one crank stroke, fixed crank and rack-link lengths, both cable travel relationships, ball spin and cup parenting, contact locations, pose continuity, sequential interlocks, partial held-key operations, quarter-turn input, pause/reset, car steering/reverse/rolling, free camera, guide tabs/close/tools and UI coordinate scaling. The ray tracer's geometric self-checks also pass.
+`mingw32-make test` passed with C++17, -O2, -Wall and -Wextra, without compiler warnings.
 
-`--verify-interactive` rendered **441 GPU frames** through all 17 mechanisms and the car exit. It uses the registered key callback, releases each held operation midway for several frames, resumes it, and taps Z four times. It verifies that OS key repeat does not add winding turns and that unrelated or future operation types cannot bypass the order. Release occurred at **70.0000 active seconds** in this synthetic-time run.
+- **17 nominal and 17 invalid handoff fixtures** exercise actual boundary guards. Invalid fixtures include a ball short of its cup, an obstructing finger, a short striker swing, a missed collar, a pin still blocking the drum, a raised bridge and an uncleared starter/shoe. Each failed guard stops the production Simulation state, rejects subsequent input and clears on reset.
+- **293 focused geometry/controller/UI assertions** include those fixtures, measured contact gaps, routed cable length and tangent continuity, socket engagement, roof/tire clearance, stage controls, held-key release, quarter turns, pause/reset, camera/car controllers, honest button labels/actions and six guide tabs.
+- **9,241 time samples / 189,137 repeated numeric checks** cover continuity, gear ratio, rod length, cable travel, rolling distance and parent attachment. These numbers are reported separately. They are not distinct visual tests.
+- Timings in poseAt() come from STAGE_TIME and relative substage fractions. Every runtime boundary is checked even when a long frame crosses multiple stages.
 
-`--verify-playback` rendered the full presentation using synthetic time steps. The actual-time run below repeats the complete presentation with real elapsed time.
+## GPU and actual-time results
 
-## Actual elapsed-time playback
+Intel Iris Xe Graphics; OpenGL 3.3.0; driver 31.0.101.4502.
 
-Device: Intel Iris Xe Graphics, OpenGL 3.3.0, driver 31.0.101.4502.
+`--verify-interactive` rendered all mechanisms and keyboard-driven exit in **420 frames**. It exercises registered callbacks, pauses held operations midway, resumes them, and performs four Z taps with key-repeat rejection. Active release time: **70.0000 seconds** under synthetic verification steps.
+
+`--verify-timing` uses actual GLFW elapsed time, without an assumed frame rate:
 
 ```text
-RELEASE: active=70.0085 s, wall=70.0085 s, frame=8879
-PASS: full 17-action / 70-second chain + 7-second car exit; 9725 GPU frames; mode, stage, camera, pause/reset, guide and shading handlers
+RELEASE: active=70.0078 s, wall=70.0078 s, frame=10272
+PASS: full 17-action / 70-second chain + 7-second car exit; 11153 GPU frames; mode, stage, camera, pause/reset, guide and shading handlers
 ```
 
-The release threshold is exactly 70.000 seconds. 70.0085 is the first rendered frame that reached it. The complete sequence and car departure rendered through 77 seconds. Capture and ray tracing ran concurrently during part of this run; animation still followed GLFW elapsed time.
+The authored threshold is exactly 70.000 seconds; 70.0078 is the first rendered frame at or beyond it. Every runtime guard passed and the car completed its departure at 77 seconds. No OpenGL errors were reported.
 
-## Rendered review
+## Actual rendered review
 
-- **37 framebuffer captures** in expanded-preview cover every action, arrivals/contact poses, the car exit, labels, Phong/Gouraud/Flat, all four lighting presets, and both guide tabs. PNG copies and three contact sheets accompany the BMP captures.
-- During review, the new row was spread across the bench, the cup pivot/entry changed so it tips clear of the chute, a supporting chute bed was added, and a closer contact camera was added as key 6.
-- Camera 1 frames the complete chain; camera 5 shows the ball's full route; camera 6 makes the cup, striker, rocker and sliding-pin contacts large enough to explain.
-- Identical-pose/view/light captures 29 and 30 confirm different Phong and Gouraud outputs (mean absolute RGB differences approximately 2.70 / 3.14 / 3.55). The lighting formula remains evaluated in the vertex shader for Gouraud and fragment shader for Phong.
-- GLFW context creation, shader compilation, the depth-map framebuffer and complete rendering reported no OpenGL errors.
-- The guide lists current handlers, mode scope, held operations and quarter turns, live status, two tabs and an explicit close button. Shared UiLayout scaling supports normal, 16:9 and wide windows.
+**68 framebuffer captures**, including 51 before/at/after handoff frames, were generated from the timeline. Every handoff trio and all six larger guide pages were inspected. Full-size PNGs, four review sheets, filenames/times/cameras in frames.csv, and individual observations are in [HANDOFF_REVIEW.md](HANDOFF_REVIEW.md).
 
-## Ray-traced snapshot
+Gouraud/Phong/Flat frames share the same pose and lighting. The optional ray tracer is retained; its rendering algorithm was not changed in this revision. The current geometry is shared with it. This revision's reported GPU timing and visual coverage refer to live OpenGL, not a new ray-tracing performance benchmark.
 
-`--capture-ray docs/expanded-ray` traced **78,326 triangles** into an **800 x 500** image in **4,685.8 ms** during concurrent timed playback. The output was visually inspected. It uses actual triangle intersections, shadow rays and one reflection bounce. The return callback preserves the earlier play/pause state; tracing time is excluded from the simulation clock.
+## Scope and packaging
 
-## Scope of verification
+The evidence combines focused faults, repeated invariants, direct registered-handler exercises, complete rendering and sampled visual inspection. It does not claim general collision response, dynamic spring forces, rope tension, full engine physics or human testing of every gesture. Projector legibility was checked at the normal window resolution, not on the actual classroom projector.
 
-The evidence combines complete GPU playback, real elapsed-time measurement, sampled rendered inspection, registered input-handler exercises and controller invariants. It is not a recording of a human performing every mouse/keyboard gesture. Contacts and stored spring energy are authored cues; no force or collision engine has been added. The car retains bounded kinematic driving, and CPU ray tracing remains a frozen single-sample image.
+The clean submission is assembled from an explicit allowlist: one executable, GLFW and required MinGW runtime DLLs, source/headers/link libraries, build files, current documents and the current review set. No old main.exe, backup ZIP or previous preview generation is included. START_PROJECT.bat launches without rebuilding; run.bat is for rebuilding with MinGW. SHA256SUMS.txt records packaged file hashes. See SUBMISSION_CHECK.txt in the submission for the isolated runtime test result.
