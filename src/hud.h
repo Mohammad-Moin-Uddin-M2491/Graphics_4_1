@@ -50,11 +50,11 @@ in vec3 c;out vec4 frag;void main(){frag=vec4(c,1);})GLSL");
     void begin(int w,int h){UiLayout l(w,h);width=1280;height=l.height;canvasWidth=l.canvasWidth;left=l.left;vertices.clear();}
     void rect(float x,float y,float w,float h,Vec3 c){vertices.insert(vertices.end(),{{x,y,c},{x+w,y,c},{x+w,y+h,c},{x,y,c},{x+w,y+h,c},{x,y+h,c}});}
     void text(float x,float y,const std::string& value,float size,Vec3 c){for(char ch:value){auto g=glyph(ch);for(int col=0;col<5;++col)for(int row=0;row<7;++row)if(g[col]&(1<<row))rect(x+col*size,y+row*size,size,size,c);x+=6*size;}}
-    void button(UiRect r,const std::string& label,bool hover,bool primary=false){
+    void button(UiRect r,const std::string& label,bool hover,bool primary=false,float size=1.4f){
         Vec3 edge=primary?Vec3{.95f,.65f,.29f}:Vec3{.3f,.48f,.55f};
         rect(r.x,r.y,r.w,r.h,edge);
         rect(r.x+1,r.y+1,r.w-2,r.h-2,hover?Vec3{.17f,.29f,.33f}:Vec3{.065f,.12f,.15f});
-        text(r.x+10,r.y+10,label,1.4f,primary?edge:Vec3{.88f,.94f,.95f});
+        text(r.x+10,r.y+(r.h-7*size)*.5f,label,size,primary?edge:Vec3{.88f,.94f,.95f});
     }
     void badge(const Mat4& vp,Vec3 world,int number,bool active){
         float cx=vp.m[0]*world.x+vp.m[4]*world.y+vp.m[8]*world.z+vp.m[12];
