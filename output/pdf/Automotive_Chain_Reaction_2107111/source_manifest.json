@@ -1,0 +1,11 @@
+{
+  "src\\animation.h": "26359f3e050222ac013f2f2ee6b99816ef0fb172bf45a377381d5aaf18021016",
+  "src\\hud.h": "a9ed0a48e8bc11caaaeada8fbca465e92e4f9b1f720fa665807bd833d1dd0a48",
+  "src\\lighting.h": "2ee5bb3f2098294c8fd206368ac7bbaeea35ae136e174d607930d5b504e95cae",
+  "src\\math3d.h": "8e8c47a67a02ac3bd6b28102cb0a632dedd7cc07e4e253c0e0dba9286096bd96",
+  "src\\raytrace.h": "2f22253f734ed8a3cd59bea04f9a2d3ba49c183b45db71d8e7dc2cbd1eff7313",
+  "src\\renderer.h": "4bd7512b14957cc3102137cf423dbe4eb8936f586226ea7c34f271e228037231",
+  "src\\scene.h": "5cb412051570dcf21b0af96422bcba79dd9c67b99f19a9bcfb520fed7b6c93ff",
+  "src\\validation.h": "8751e3313c57d6755372350180d615144c5090f502243edefba30e63a07b1d5b",
+  "src/main.cpp": "8c8ceb029f3bf9642efecea085aae6b4f08cb57084f1095472d038a84d9eeec5"
+}
